@@ -1,0 +1,57 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // On reste sur une version stable
+        classpath 'com.android.tools.build:gradle:8.5.0'
+        classpath 'com.google.gms:google-services:4.4.2'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.buildDir = '../build'
+subprojects {
+    project.buildDir = "${rootProject.buildDir}/${project.name}"
+}
+
+// --- LE BLOC MAGIQUE POUR CORRIGER LES DÉPENDANCES ---
+subprojects {
+    project.configurations.all {
+        resolutionStrategy {
+            // On force le retour à des versions stables qui marchent avec AGP 8.5
+            force 'androidx.browser:browser:1.8.0'
+            force 'androidx.core:core:1.13.1'
+            force 'androidx.core:core-ktx:1.13.1'
+            force 'androidx.activity:activity:1.9.0'
+            force 'androidx.activity:activity-ktx:1.9.0'
+        }
+    }
+}
+
+// --- CONFIGURATION FLUTTER & COMPATIBILITÉ ---
+subprojects {
+    // Force la compilation en version 34 (Android 14) pour éviter les erreurs de plugins
+    plugins.withId("com.android.library") {
+        android {
+            compileSdkVersion 34
+            if (namespace == null) {
+                namespace = project.group.toString()
+            }
+        }
+    }
+    
+    // Verrouille le projet pour Flutter (toujours à la fin)
+    project.evaluationDependsOn(':app')
+}
+
+tasks.register("clean", Delete) {
+    delete rootProject.layout.buildDirectory
+}

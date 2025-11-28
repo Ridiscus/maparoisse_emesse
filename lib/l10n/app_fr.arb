@@ -1,0 +1,602 @@
+{
+  "@@locale": "fr",
+  "appTitle": "E-MESSE",
+
+  "settingsTitle": "Paramètres",
+  "settingsAccountSectionTitle": "Compte",
+  "settingsEditProfile": "Modifier le profil",
+  "settingsChangePassword": "Changer le mot de passe",
+  "settingsNotificationsSectionTitle": "Notifications",
+  "settingsSmsNotifications": "SMS",
+  "settingsEmailNotifications": "Email",
+  "settingsPushNotifications": "Notifications Push",
+  "settingsGeneralPrefsSectionTitle": "Préférences Générales",
+  "settingsAppLanguage": "Langue de l'application",
+  "settingsFontSize": "Taille de la police",
+  "settingsVoiceReader": "Lecteur vocal",
+  "settingsAppTheme": "Thème de l'application",
+  "settingsFaqHelp": "FAQ / Aide",
+  "settingsPrivacyPolicy": "Politique de confidentialité",
+  "settingsLogoutButton": "Se déconnecter",
+  "settingsCurrentLanguageFrench": "Français",
+  "settingsCurrentLanguageEnglish": "English",
+
+  "languageSelectorTitle": "Choisir une langue",
+  "languageChangedSuccess": "Langue changée avec succès !",
+
+  "drawerLogoutTitle": "Déconnexion",
+  "drawerLogoutMessage": "Êtes-vous sûr de vouloir vous déconnecter ?",
+  "drawerLogoutCancel": "Annuler",
+  "drawerLogoutConfirm": "Se déconnecter",
+
+  "myRequests": "Mes demandes",
+  "noRequests": "Aucune demande",
+  "emptyRequestsMessage": "Vous n'avez pas encore fait de demande.\nCommencez par créer votre première demande.",
+  "makeRequest": "Faire une demande",
+
+  "featureUnavailable": "Fonctionnalité à venir !",
+  "loadingLabel": "Chargement...",
+  "errorLabel": "Erreur",
+  "saveChanges": "Enregistrer les modifications",
+
+  "loginTitle": "Se connecter",
+  "registerTitle": "Inscription",
+  "emailLabel": "E-mail",
+  "passwordLabel": "Mot de passe",
+  "usernameLabel": "Nom d'utilisateur",
+  "fullNameLabel": "Nom complet",
+  "phoneLabel": "Numéro de téléphone",
+  "civiliteLabel": "Civilité",
+  "confirmPasswordLabel": "Confirmer le mot de passe",
+  "oldPasswordLabel": "Ancien mot de passe",
+  "newPasswordLabel": "Nouveau mot de passe",
+  "requiredField": "Champ requis",
+  "invalidEmail": "Email invalide",
+  "passwordTooShort": "Minimum 6 caractères",
+  "passwordsDoNotMatch": "Les mots de passe ne correspondent pas",
+  "passwordMustBeDifferent": "Doit être différent de l'ancien",
+
+  "homeWelcome": "Bienvenue, {userName} !",
+  "@homeWelcome": {
+    "placeholders": {
+      "userName": {
+        "type": "String",
+        "example": "Jean Dupont"
+      }
+    }
+  },
+  "homeGreeting": "Que la paix soit avec vous.",
+  "homeNextMassesTitle": "Vos prochaines Messes",
+  "homeLocationTitle": "Votre Position Actuelle",
+
+
+
+  "themeLight": "Clair",
+  "themeDark": "Sombre",
+  "themeSystem": "Système",
+
+  "fontSizeSmall": "Petite",
+  "fontSizeMedium": "Moyenne",
+  "fontSizeLarge": "Grande",
+
+
+
+
+  "loginHintEmailOrUser": "E-mail ou Nom d'utilisateur",
+  "loginHintPassword": "Mot de passe",
+  "loginBtnLabel": "Se connecter",
+  "loginCreateAccount": "Créer un compte",
+  "loginForgotPassword": "Mot de passe oublié ?",
+  "loginOrContinue": "Ou continuer avec",
+
+  "loginValEmailEmpty": "Veuillez saisir votre email ou nom d'utilisateur",
+  "loginValEmailShort": "Doit contenir au moins 3 caractères",
+  "loginValPassEmpty": "Veuillez saisir votre mot de passe",
+  "loginValPassShort": "Le mot de passe doit contenir au moins 8 caractères",
+
+  "loginSuccess": "Connexion réussie !",
+  "loginErrorCredentials": "Identifiants incorrects. Veuillez vérifier.",
+  "loginErrorGoogleToken": "Impossible de récupérer le jeton d'authentification Google.",
+  "loginSuccessGoogle": "Connecté : {name} !",
+  "@loginSuccessGoogle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "loginErrorGoogleLink": "Impossible de lier ce compte Google. Vérifiez s'il est déjà utilisé.",
+  "loginErrorGoogleGeneric": "Une erreur est survenue lors de la connexion avec Google.",
+
+
+
+  "registerSubtitle": "Rejoignez notre communauté",
+
+  "registerStep3Title": "Photo de profil",
+
+  "registerCivilityLabel": "Civilité",
+  "registerCivilityMr": "Monsieur",
+  "registerCivilityMrs": "Madame",
+  "registerCivilityMs": "Mademoiselle",
+  "registerCivilityFather": "Père",
+  "registerCivilitySister": "Soeur",
+  "registerCivilityBrother": "Frère",
+
+  "registerLabelName": "Nom",
+  "registerLabelFirstName": "Prénom",
+  "registerLabelParish": "Paroisse (Optionnel)",
+  "registerHintParishSearch": "Rechercher une paroisse...",
+
+
+  "registerImgChoose": "Choisir une photo",
+  "registerImgChange": "Changer la photo",
+  "registerImgDelete": "Supprimer",
+  "registerImgSourceTitle": "Choisir une source",
+  "registerImgCamera": "Appareil photo",
+  "registerImgGallery": "Galerie",
+
+  "registerBtnNext": "Suivant",
+  "registerBtnPrev": "Précédent",
+  "registerBtnSubmit": "S'inscrire",
+  "registerAlreadyAccount": "Déjà un compte ?",
+  "registerBtnLogin": "Se connecter",
+
+  "valReqName": "Veuillez entrer votre nom",
+  "valReqFirstName": "Veuillez entrer votre prénom",
+  "valReqEmail": "Veuillez entrer un e-mail valide",
+  "valReqPhone": "Veuillez entrer votre téléphone",
+  "valInvalidPhone": "Numéro invalide (10 chiffres requis)",
+  "valReqUsername": "Veuillez choisir un nom d'utilisateur",
+  "valShortUsername": "3 caractères minimum",
+  "valReqPass": "Mot de passe requis",
+  "valShortPass": "8 caractères minimum",
+  "valPassMismatch": "Les mots de passe ne correspondent pas",
+
+  "errRegisterFixErrors": "Veuillez corriger les erreurs avant de continuer.",
+  "errRegisterUsernameTaken": "Ce nom d'utilisateur est déjà pris.",
+  "errRegisterEmailTaken": "Cet email est déjà utilisé.",
+  "errRegisterGeneric": "Une erreur est survenue lors de l'inscription.",
+  "successRegister": "Compte créé avec succès ! Connectez-vous.",
+  "errImagePick": "Erreur lors de la sélection de l'image",
+  "errCivilityRequired": "Veuillez sélectionner votre civilité",
+  "successRegisterRedirect": "Inscription réussie ! Redirection...",
+
+
+
+  "registerStep1Title": "Informations personnelles",
+  "registerStep1Subtitle": "Veuillez renseigner vos informations personnelles",
+
+  "registerLabelCivility": "Civilité *",
+  "registerGenderMale": "Homme",
+  "registerGenderFemale": "Femme",
+
+  "registerLabelFullName": "Nom complet",
+  "registerHintFullName": "Ex: Jean Dupont",
+
+  "registerLabelUsername": "Nom d'utilisateur",
+  "registerHintUsername": "Ex: jean_dupont",
+
+  "registerLabelEmail": "Adresse email",
+  "registerHintEmail": "Ex: jean@example.com",
+
+  "registerLabelPhone": "Numéro de téléphone",
+  "registerHintPhone": "Ex: +33 6 12 34 56 78",
+
+  "registerStep2Title": "Sécurité du compte",
+  "registerStep2Subtitle": "Choisissez un mot de passe sécurisé pour votre compte",
+
+  "registerLabelPassword": "Mot de passe",
+  "registerHintPassword": "Minimum 8 caractères",
+
+  "registerLabelConfirmPass": "Confirmer le mot de passe",
+  "registerHintConfirmPass": "Ressaisissez votre mot de passe",
+
+  "registerPassReqTitle": "Exigences du mot de passe",
+  "registerPassReqLen": "Au moins 8 caractères",
+  "registerPassReqMix": "Mélange de lettres et chiffres recommandé",
+  "registerPassReqCommon": "Évitez les mots de passe courants",
+
+
+  "valNameEmpty": "Veuillez saisir votre nom complet",
+  "valNameShort": "Le nom doit contenir au moins 2 caractères",
+
+  "valUsernameEmpty": "Veuillez choisir un nom d'utilisateur",
+  "valUsernameShort": "Le nom d'utilisateur doit contenir au moins 3 caractères",
+  "valUsernameInvalid": "Seules les lettres, chiffres et _ sont autorisés",
+
+  "valEmailEmpty": "Veuillez saisir votre email",
+  "valEmailInvalid": "Veuillez saisir un email valide",
+
+  "valPhoneEmpty": "Veuillez saisir votre numéro de téléphone",
+  "valPhonePrefix": "Le numéro doit commencer par l'indicatif (ex: +225)",
+  "valPhoneShort": "Numéro de téléphone trop court",
+  "valPhoneFormat": "Format invalide (seulement + et chiffres)",
+
+  "valPassEmpty": "Veuillez saisir un mot de passe",
+  "valPassShort": "Le mot de passe doit contenir au moins 8 caractères",
+  "valConfirmPassEmpty": "Veuillez confirmer votre mot de passe",
+
+
+
+  "homeHello": "Bonjour",
+  "homeLocationUnknown": "Localisation inconnue",
+  "homeLocationDisabled": "Localisation désactivée",
+  "homeLocationDenied": "Permission refusée",
+  "homeLocationBlocked": "Permission bloquée",
+  "homeLocationNotFound": "Adresse non trouvée",
+  "homeLocationPosNotFound": "Position introuvable",
+  "homeLocationError": "Erreur localisation",
+  "homeMapError": "Impossible d'ouvrir l'application de carte.",
+
+  "homeStatusTitle": "Mon statut des messes",
+  "homeStatusPending": "En attente",
+  "homeStatusCelebrated": "Célébrées",
+  "homeStatusUpcoming": "À venir",
+
+  "homeQuickActionsTitle": "Actions rapides",
+  "homeBtnRequest": "Faire une demande",
+  "homeBtnEvents": "Voir événements",
+  "homeBtnParishes": "Paroisses",
+
+  "homeUpcomingSectionTitle": "Prochaines messes",
+  "homeNoUpcoming": "Aucune messe confirmée à venir.",
+  "homeParishSectionTitle": "Paroisses à proximité",
+
+
+
+  "online": "En ligne",
+  "welcomeUser": "Bienvenue, {userName} !",
+  "@welcomeUser": {
+    "description": "Message de bienvenue affichant le nom de l'utilisateur",
+    "placeholders": {
+      "userName": {}
+    }
+  },
+  "peaceMessage": "Que la paix soit avec vous.",
+
+  "settings": "Paramètres",
+  "notifications": "Notifications",
+  "noRequests": "Aucune demande ne correspond à ce statut.",
+
+  "status_waiting_payment": "En att. Paiement",
+  "status_waiting_confirmation": "En att. Confirmation",
+  "status_confirmed": "Confirmé",
+  "status_celebrated": "Célébré",
+  "status_cancelled": "Annulé",
+
+  "modal_pending": "Messes en attente",
+  "modal_celebrated": "Messes célébrées",
+  "modal_upcoming": "Messes à venir",
+
+
+  "editProfileTitle": "Modifier le profil",
+  "editProfileSaveButton": "Enregistrer les modifications",
+  "editProfileLogoutButton": "Se déconnecter",
+
+  "editProfileNameLabel": "Nom complet",
+  "editProfileEmailLabel": "Adresse e-mail",
+  "editProfilePhoneLabel": "Numéro de téléphone",
+  "editProfileCiviliteLabel": "Civilité",
+
+  "editProfileCiviliteM": "M.",
+  "editProfileCiviliteMme": "Mme",
+  "editProfileCiviliteMlle": "Mlle",
+
+  "editProfileNameError": "Veuillez saisir votre nom",
+  "editProfilePhoneError": "Veuillez saisir votre numéro",
+  "editProfileCiviliteError": "Veuillez sélectionner une civilité",
+
+  "editProfileImageError": "Erreur lors de la sélection de l'image.",
+  "editProfileUpdateSuccess": "Profil mis à jour avec succès !",
+  "editProfileUpdateError": "Erreur lors de la mise à jour du profil.",
+  "editProfileUnexpectedError": "Une erreur inattendue est survenue.",
+
+  "logoutDialogTitle": "Déconnexion",
+  "logoutDialogMessage": "Voulez-vous vraiment vous déconnecter ?",
+  "logoutDialogCancel": "Annuler",
+  "logoutDialogConfirm": "Se déconnecter",
+
+  "passwordModalTitle": "Vérifier votre mot de passe",
+  "passwordModalPlaceholder": "Votre mot de passe",
+  "passwordModalButton": "Vérifier",
+  "passwordModalEmpty": "Veuillez entrer votre mot de passe.",
+  "passwordModalIncorrect": "Mot de passe incorrect. Veuillez réessayer.",
+  "passwordModalError": "Une erreur est survenue. Veuillez réessayer.",
+
+
+
+  "confirmIdentity": "Confirmez votre identité",
+  "@confirmIdentity": {
+    "description": "Titre du modal pour vérifier l'identité de l'utilisateur"
+  },
+
+  "enterPasswordToSave": "Pour enregistrer vos modifications, veuillez entrer votre mot de passe actuel.",
+  "@enterPasswordToSave": {
+    "description": "Message expliquant pourquoi l'utilisateur doit entrer son mot de passe"
+  },
+
+  "currentPassword": "Mot de passe actuel",
+  "@currentPassword": {
+    "description": "Label du champ texte du mot de passe"
+  },
+
+  "verifyAndSave": "Vérifier et Enregistrer",
+  "@verifyAndSave": {
+    "description": "Texte du bouton pour valider et sauvegarder"
+  },
+
+
+  "forgotPassword": "Mot de passe oublié",
+  "@forgotPassword": {
+    "description": "Titre de l'écran AppBar"
+  },
+
+  "resetPassword": "Réinitialiser le mot de passe",
+  "@resetPassword": {
+    "description": "Grand titre au centre de l'écran"
+  },
+
+  "enterEmailToReceiveCode": "Entrez votre adresse e-mail pour recevoir un code de vérification.",
+  "@enterEmailToReceiveCode": {
+    "description": "Sous-titre expliquant la procédure de réinitialisation"
+  },
+
+  "emailLabel": "E-mail",
+  "@emailLabel": {
+    "description": "Label du champ de saisie email"
+  },
+
+  "invalidEmailError": "Veuillez entrer un e-mail valide.",
+  "@invalidEmailError": {
+    "description": "Message d'erreur si l'email est invalide"
+  },
+
+  "sendCode": "Envoyer le code",
+  "@sendCode": {
+    "description": "Bouton d'envoi pour le reset"
+  },
+
+  "emailSendError": "Impossible d'envoyer l'e-mail. Vérifiez l'adresse.",
+  "@emailSendError": {
+    "description": "Erreur si l'envoi échoue"
+  },
+
+  "unknownError": "Une erreur est survenue.",
+  "@unknownError": {
+    "description": "Erreur générique"
+  },
+
+  "otpTitle": "Vérification",
+  "@otpTitle": {
+    "description": "Titre de l'écran OTP dans l'AppBar"
+  },
+
+  "enterCode": "Entrez le code",
+  "@enterCode": {
+    "description": "Titre principal pour demander le code OTP"
+  },
+
+  "otpSentTo": "Nous avons envoyé un code à 6 chiffres à\n{email}",
+  "@otpSentTo": {
+    "description": "Message de confirmation d'envoi du code OTP",
+    "placeholders": {
+      "email": {
+        "type": "String",
+        "example": "exemple@mail.com"
+      }
+    }
+  },
+
+  "otpLabel": "Code à 6 chiffres",
+  "@otpLabel": {
+    "description": "Label du champ de saisie OTP"
+  },
+
+  "otpInvalidError": "Veuillez entrer un code valide.",
+  "@otpInvalidError": {
+    "description": "Message d'erreur si le code OTP est incomplet"
+  },
+
+  "verifyButton": "Vérifier",
+  "@verifyButton": {
+    "description": "Bouton pour vérifier le code OTP"
+  },
+
+  "otpIncorrectError": "Code incorrect. Veuillez réessayer.",
+  "@otpIncorrectError": {
+    "description": "Erreur si le code OTP est faux"
+  },
+
+  "unknownError": "Une erreur est survenue.",
+  "@unknownError": {
+    "description": "Erreur générique"
+  },
+
+
+  "resetPasswordTitle": "Nouveau mot de passe",
+  "createNewPassword": "Créez un nouveau mot de passe",
+  "newPassword": "Nouveau mot de passe",
+  "confirmPassword": "Confirmer le mot de passe",
+  "passwordTooShort": "Au moins 8 caractères requis.",
+  "passwordMismatch": "Les mots de passe ne correspondent pas.",
+  "validate": "Valider",
+
+  "passwordChangedSuccess": "Mot de passe changé avec succès !",
+  "resetFailed": "Impossible de changer le mot de passe. Le code a peut-être expiré.",
+  "unexpectedError": "Une erreur est survenue.",
+
+
+
+
+  "notificationsTitle": "Notifications",
+  "@notificationsTitle": {
+    "description": "Titre de l'AppBar des notifications"
+  },
+  "markAllAsRead": "Marquer tout comme lu",
+  "@markAllAsRead": {
+    "description": "Tooltip pour le bouton Marquer tout comme lu"
+  },
+  "deleteAll": "Supprimer tout",
+  "@deleteAll": {
+    "description": "Tooltip pour le bouton Supprimer tout"
+  },
+  "deleteAllConfirmationTitle": "Confirmation",
+  "@deleteAllConfirmationTitle": {
+    "description": "Titre du dialog de confirmation de suppression"
+  },
+  "deleteAllConfirmationMessage": "Voulez-vous vraiment supprimer toutes vos notifications ? Cette action est irréversible.",
+  "@deleteAllConfirmationMessage": {
+    "description": "Message du dialog de confirmation pour supprimer toutes les notifications"
+  },
+  "cancel": "Annuler",
+  "@cancel": {
+    "description": "Texte du bouton Annuler dans un dialog"
+  },
+  "delete": "Supprimer",
+  "@delete": {
+    "description": "Texte du bouton Supprimer dans un dialog"
+  },
+  "loadNotificationsError": "Impossible de charger les notifications.",
+  "@loadNotificationsError": {
+    "description": "Message d'erreur si l'on ne peut pas charger les notifications"
+  },
+  "markAllAsReadError": "Erreur: Impossible de marquer comme lu.",
+  "@markAllAsReadError": {
+    "description": "Message d'erreur lors du marquage de toutes les notifications comme lues"
+  },
+  "deleteAllError": "Erreur: Impossible de tout supprimer.",
+  "@deleteAllError": {
+    "description": "Message d'erreur lors de la suppression de toutes les notifications"
+  },
+  "oops": "Oups !",
+  "@oops": {
+    "description": "Titre de l'écran erreur"
+  },
+  "noNotificationsTitle": "Aucune notification",
+  "@noNotificationsTitle": {
+    "description": "Titre affiché lorsque la liste des notifications est vide"
+  },
+  "noNotificationsMessage": "Vos notifications importantes apparaîtront ici.",
+  "@noNotificationsMessage": {
+    "description": "Message affiché lorsque la liste des notifications est vide"
+  },
+  "notificationDeleted": "Notification \"{title}\" supprimée.",
+  "@notificationDeleted": {
+    "description": "Message affiché après suppression d'une notification avec option Annuler",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "Nouvelle demande"
+      }
+    }
+  },
+
+
+  "searchParishTitle": "Rechercher une paroisse",
+  "searchHint": "Paroisse, ville, commune...",
+  "parishesSectionTitle": "Paroisses",
+  "retryButton": "Réessayer",
+  "loadingErrorMessage": "Impossible de charger les données",
+  "noParishesFound": "Aucune paroisse trouvée.",
+  "noParishesAvailable": "Aucune paroisse disponible.",
+  "unknownParish": "Paroisse Inconnue",
+  "detailsButton": "Détails",
+  "internetError": "Pas de connexion Internet. Vérifiez votre réseau.",
+  "connectionError": "Erreur de connexion.",
+
+
+  "unknownParish": "Paroisse Inconnue",
+  "descriptionUnavailable": "Description non disponible.",
+  "offeringSuggested": "Offrande de messe conseillée :",
+  "moreDetailsButton": "Plus de détails",
+  "addToFavorites": "Ajouter aux favoris",
+  "removeFromFavorites": "Retirer des favoris",
+  "parishAddedFavorite": "Paroisse ajoutée aux favoris !",
+  "parishRemovedFavorite": "Paroisse retirée des favoris.",
+  "favoritesUpdateError": "Erreur lors de la mise à jour des favoris.",
+  "mapsOpenError": "Impossible d'ouvrir l'application de carte.",
+
+
+
+
+  "events_title": "Événements",
+  "events_none": "Aucun événement pour cette catégorie",
+  "events_none_with_dot": "Aucun événement pour cette catégorie.",
+  "error_generic": "Une erreur est survenue.",
+  "error_no_internet": "Pas de connexion Internet. Vérifiez votre réseau.",
+  "error_timeout": "Le serveur ne répond pas. Réessayez plus tard.",
+  "tab_all": "Tous",
+
+
+  "requests_title": "Mes demandes",
+  "tab_in_progress": "En cours",
+  "tab_history": "Historique",
+  "tab_favorites": "Favoris",
+
+  "error_loading": "Erreur de chargement",
+  "list_updated": "Liste mise à jour",
+  "generic_error": "Erreur",
+  "unknown_date": "Date inconnue",
+
+  "empty_requests": "Aucune demande trouvée",
+  "empty_favorites": "Aucun favori",
+  "settings": "Paramètres",
+
+
+
+
+  "close": "Fermer",
+  "pay_now": "Payer maintenant",
+  "print_receipt": "Imprimer le reçu",
+
+  "request_details_title": "Détails de la demande",
+  "intention": "Intention",
+  "parish": "Paroisse",
+  "date": "Date",
+  "celebration": "Célébration",
+  "intercessor": "Intercesseur",
+  "offering": "Offrande",
+
+  "no_favorite_title": "Aucun Favori",
+  "no_result_title": "Aucun résultat",
+  "no_favorite_message": "Vous n'avez pas encore ajouté de paroisse à vos favoris. Cliquez sur ⭐️ sur une paroisse pour l'ajouter.",
+  "no_result_message": "Aucune demande ne correspond à cet onglet.",
+
+  "favorites_updated": "Favoris mis à jour",
+  "parish_data_invalid": "Erreur: Données de paroisse invalides",
+  "favorite_removed": "\"{parishName}\" retiré des favoris",
+  "favorite_remove_error": "Erreur lors de la suppression",
+
+
+
+  "nav_home": "Accueil",
+  "@nav_home": {
+    "description": "Libellé de l'onglet Accueil"
+  },
+
+  "nav_event": "Événement",
+  "@nav_event": {
+    "description": "Libellé de l'onglet Événement"
+  },
+
+  "nav_requests": "Demandes",
+  "@nav_requests": {
+    "description": "Libellé de l'onglet Mes demandes"
+  },
+
+  "nav_parish": "Paroisse",
+  "@nav_parish": {
+    "description": "Libellé de l'onglet Paroisse"
+  }
+
+
+
+
+
+
+
+
+
+
+}
+

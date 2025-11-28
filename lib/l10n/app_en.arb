@@ -1,0 +1,571 @@
+
+{
+  "@@locale": "en",
+  "appTitle": "E-MESSE",
+
+  "settingsTitle": "Settings",
+  "settingsAccountSectionTitle": "Account",
+  "settingsEditProfile": "Edit Profile",
+  "settingsChangePassword": "Change Password",
+  "settingsNotificationsSectionTitle": "Notifications",
+  "settingsSmsNotifications": "SMS",
+  "settingsEmailNotifications": "Email",
+  "settingsPushNotifications": "Push Notifications",
+  "settingsGeneralPrefsSectionTitle": "General Preferences",
+  "settingsAppLanguage": "App Language",
+  "settingsFontSize": "Font Size",
+  "settingsVoiceReader": "Voice Reader",
+  "settingsAppTheme": "App Theme",
+  "settingsFaqHelp": "FAQ / Help",
+  "settingsPrivacyPolicy": "Privacy Policy",
+  "settingsLogoutButton": "Log Out",
+  "settingsCurrentLanguageFrench": "French",
+  "settingsCurrentLanguageEnglish": "English",
+
+  "languageSelectorTitle": "Choose a language",
+  "languageChangedSuccess": "Language changed successfully!",
+
+  "drawerLogoutTitle": "Logout",
+  "drawerLogoutMessage": "Are you sure you want to log out?",
+  "drawerLogoutCancel": "Cancel",
+  "drawerLogoutConfirm": "Log Out",
+
+  "myRequests": "My Requests",
+  "noRequests": "No request",
+  "emptyRequestsMessage": "You have not made any request yet.\nStart by creating your first request.",
+  "makeRequest": "Make a request",
+
+  "featureUnavailable": "Feature coming soon!",
+  "loadingLabel": "Loading...",
+  "errorLabel": "Error",
+  "saveChanges": "Save changes",
+
+  "loginTitle": "Login",
+  "registerTitle": "Register",
+  "emailLabel": "Email",
+  "passwordLabel": "Password",
+  "usernameLabel": "Username",
+  "fullNameLabel": "Full Name",
+  "phoneLabel": "Phone Number",
+  "civiliteLabel": "Title",
+  "confirmPasswordLabel": "Confirm Password",
+  "oldPasswordLabel": "Old Password",
+  "newPasswordLabel": "New Password",
+  "requiredField": "Required field",
+  "invalidEmail": "Invalid email",
+  "passwordTooShort": "Minimum 6 characters",
+  "passwordsDoNotMatch": "Passwords do not match",
+  "passwordMustBeDifferent": "Must be different from the old one",
+
+  "homeWelcome": "Welcome, {userName}!",
+  "@homeWelcome": {
+    "placeholders": {
+      "userName": {
+        "type": "String",
+        "example": "John Doe"
+      }
+    }
+  },
+  "homeGreeting": "Peace be with you.",
+  "homeNextMassesTitle": "Your Upcoming Masses",
+  "homeLocationTitle": "Your Current Location",
+
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "themeSystem": "System",
+
+  "fontSizeSmall": "Small",
+  "fontSizeMedium": "Medium",
+  "fontSizeLarge": "Large",
+
+  "loginHintEmailOrUser": "Email or Username",
+  "loginHintPassword": "Password",
+  "loginBtnLabel": "Login",
+  "loginCreateAccount": "Create an account",
+  "loginForgotPassword": "Forgot password?",
+  "loginOrContinue": "Or continue with",
+
+  "loginValEmailEmpty": "Please enter your email or username",
+  "loginValEmailShort": "Must contain at least 3 characters",
+  "loginValPassEmpty": "Please enter your password",
+  "loginValPassShort": "Password must contain at least 8 characters",
+
+  "loginSuccess": "Login successful!",
+  "loginErrorCredentials": "Incorrect credentials. Please check.",
+  "loginErrorGoogleToken": "Unable to retrieve Google authentication token.",
+  "loginSuccessGoogle": "Logged in: {name}!",
+  "@loginSuccessGoogle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "loginErrorGoogleLink": "Unable to link this Google account. Check if it is already used.",
+  "loginErrorGoogleGeneric": "An error occurred while signing in with Google.",
+
+  "registerSubtitle": "Join our community",
+
+  "registerStep3Title": "Profile Picture",
+
+  "registerCivilityLabel": "Title",
+  "registerCivilityMr": "Mr.",
+  "registerCivilityMrs": "Mrs.",
+  "registerCivilityMs": "Miss",
+  "registerCivilityFather": "Father",
+  "registerCivilitySister": "Sister",
+  "registerCivilityBrother": "Brother",
+
+  "registerLabelName": "Last Name",
+  "registerLabelFirstName": "First Name",
+  "registerLabelParish": "Parish (Optional)",
+  "registerHintParishSearch": "Search a parish...",
+
+
+  "registerImgChoose": "Choose a photo",
+  "registerImgChange": "Change photo",
+  "registerImgDelete": "Delete",
+  "registerImgSourceTitle": "Choose a source",
+  "registerImgCamera": "Camera",
+  "registerImgGallery": "Gallery",
+
+  "registerBtnNext": "Next",
+  "registerBtnPrev": "Previous",
+  "registerBtnSubmit": "Sign Up",
+  "registerAlreadyAccount": "Already have an account?",
+  "registerBtnLogin": "Login",
+
+  "valReqName": "Please enter your last name",
+  "valReqFirstName": "Please enter your first name",
+  "valReqEmail": "Please enter a valid email",
+  "valReqPhone": "Please enter your phone number",
+  "valInvalidPhone": "Invalid number (10 digits required)",
+  "valReqUsername": "Please choose a username",
+  "valShortUsername": "Minimum 3 characters",
+  "valReqPass": "Password required",
+  "valShortPass": "Minimum 8 characters",
+  "valPassMismatch": "Passwords do not match",
+
+  "errRegisterFixErrors": "Please fix the errors before continuing.",
+  "errRegisterUsernameTaken": "This username is already taken.",
+  "errRegisterEmailTaken": "This email is already used.",
+  "errRegisterGeneric": "An error occurred during registration.",
+  "successRegister": "Account created successfully! Please log in.",
+  "errImagePick": "Error selecting image",
+  "errCivilityRequired": "Please select your title",
+  "successRegisterRedirect": "Registration successful! Redirecting...",
+
+  "registerStep1Title": "Personal Information",
+  "registerStep1Subtitle": "Please fill in your personal information",
+
+  "registerLabelCivility": "Title *",
+  "registerGenderMale": "Male",
+  "registerGenderFemale": "Female",
+
+  "registerLabelFullName": "Full Name",
+  "registerHintFullName": "Ex: John Doe",
+
+  "registerLabelUsername": "Username",
+  "registerHintUsername": "Ex: john_doe",
+
+  "registerLabelEmail": "Email address",
+  "registerHintEmail": "Ex: john@example.com",
+
+  "registerLabelPhone": "Phone number",
+  "registerHintPhone": "Ex: +33 6 12 34 56 78",
+
+  "registerStep2Title": "Account Security",
+  "registerStep2Subtitle": "Choose a secure password for your account",
+
+  "registerLabelPassword": "Password",
+  "registerHintPassword": "Minimum 8 characters",
+
+  "registerLabelConfirmPass": "Confirm password",
+  "registerHintConfirmPass": "Re-enter your password",
+
+  "registerPassReqTitle": "Password Requirements",
+  "registerPassReqLen": "At least 8 characters",
+  "registerPassReqMix": "Mix of letters and numbers recommended",
+  "registerPassReqCommon": "Avoid common passwords",
+
+  "valNameEmpty": "Please enter your full name",
+  "valNameShort": "The name must contain at least 2 characters",
+
+  "valUsernameEmpty": "Please choose a username",
+  "valUsernameShort": "Username must contain at least 3 characters",
+  "valUsernameInvalid": "Only letters, numbers and _ are allowed",
+
+  "valEmailEmpty": "Please enter your email",
+  "valEmailInvalid": "Please enter a valid email",
+
+  "valPhoneEmpty": "Please enter your phone number",
+  "valPhonePrefix": "The number must start with the country code (e.g., +225)",
+  "valPhoneShort": "Phone number too short",
+  "valPhoneFormat": "Invalid format (only + and digits)",
+
+  "valPassEmpty": "Please enter a password",
+  "valPassShort": "Password must contain at least 8 characters",
+  "valConfirmPassEmpty": "Please confirm your password",
+
+  "homeHello": "Hello",
+  "homeLocationUnknown": "Unknown location",
+  "homeLocationDisabled": "Location disabled",
+  "homeLocationDenied": "Permission denied",
+  "homeLocationBlocked": "Permission blocked",
+  "homeLocationNotFound": "Address not found",
+  "homeLocationPosNotFound": "Position not found",
+  "homeLocationError": "Location error",
+  "homeMapError": "Unable to open map application.",
+
+  "homeStatusTitle": "My Mass Status",
+  "homeStatusPending": "Pending",
+  "homeStatusCelebrated": "Celebrated",
+  "homeStatusUpcoming": "Upcoming",
+
+  "homeQuickActionsTitle": "Quick Actions",
+  "homeBtnRequest": "Make a request",
+  "homeBtnEvents": "View events",
+  "homeBtnParishes": "Parishes",
+
+  "homeUpcomingSectionTitle": "Upcoming Masses",
+  "homeNoUpcoming": "No confirmed upcoming mass.",
+  "homeParishSectionTitle": "Nearby Parishes",
+
+  "online": "Online",
+  "welcomeUser": "Welcome, {userName}!",
+  "@welcomeUser": {
+    "description": "Welcome message showing user name",
+    "placeholders": {
+      "userName": {}
+    }
+  },
+  "peaceMessage": "Peace be with you.",
+
+  "settings": "Settings",
+  "notifications": "Notifications",
+  "noRequests": "No request matches this status.",
+
+  "status_waiting_payment": "Awaiting Payment",
+  "status_waiting_confirmation": "Awaiting Confirmation",
+  "status_confirmed": "Confirmed",
+  "status_celebrated": "Celebrated",
+  "status_cancelled": "Cancelled",
+
+  "modal_pending": "Pending Masses",
+  "modal_celebrated": "Celebrated Masses",
+  "modal_upcoming": "Upcoming Masses",
+
+  "editProfileTitle": "Edit Profile",
+  "editProfileSaveButton": "Save changes",
+  "editProfileLogoutButton": "Log Out",
+
+  "editProfileNameLabel": "Full Name",
+  "editProfileEmailLabel": "Email address",
+  "editProfilePhoneLabel": "Phone number",
+  "editProfileCiviliteLabel": "Title",
+
+  "editProfileCiviliteM": "Mr.",
+  "editProfileCiviliteMme": "Mrs.",
+  "editProfileCiviliteMlle": "Miss",
+
+  "editProfileNameError": "Please enter your name",
+  "editProfilePhoneError": "Please enter your phone number",
+  "editProfileCiviliteError": "Please select a title",
+
+  "editProfileImageError": "Error selecting image.",
+  "editProfileUpdateSuccess": "Profile updated successfully!",
+  "editProfileUpdateError": "Error updating profile.",
+  "editProfileUnexpectedError": "An unexpected error occurred.",
+
+  "logoutDialogTitle": "Logout",
+  "logoutDialogMessage": "Do you really want to log out?",
+  "logoutDialogCancel": "Cancel",
+  "logoutDialogConfirm": "Log Out",
+
+  "passwordModalTitle": "Verify your password",
+  "passwordModalPlaceholder": "Your password",
+  "passwordModalButton": "Verify",
+  "passwordModalEmpty": "Please enter your password.",
+  "passwordModalIncorrect": "Incorrect password. Please try again.",
+  "passwordModalError": "An error occurred. Please try again.",
+
+  "confirmIdentity": "Confirm your identity",
+  "@confirmIdentity": {
+    "description": "Modal title to verify user identity"
+  },
+
+  "enterPasswordToSave": "To save your changes, please enter your current password.",
+  "@enterPasswordToSave": {
+    "description": "Message explaining why the user must enter their password"
+  },
+
+  "currentPassword": "Current password",
+  "@currentPassword": {
+    "description": "Password field label"
+  },
+
+  "verifyAndSave": "Verify and Save",
+  "@verifyAndSave": {
+    "description": "Button text to validate and save"
+  },
+
+  "forgotPassword": "Forgot password",
+  "@forgotPassword": {
+    "description": "AppBar title"
+  },
+
+  "resetPassword": "Reset Password",
+  "@resetPassword": {
+    "description": "Main title in the center of the screen"
+  },
+
+  "enterEmailToReceiveCode": "Enter your email address to receive a verification code.",
+  "@enterEmailToReceiveCode": {
+    "description": "Subtitle explaining reset procedure"
+  },
+
+  "invalidEmailError": "Please enter a valid email.",
+  "@invalidEmailError": {
+    "description": "Error message for invalid email"
+  },
+
+  "sendCode": "Send Code",
+  "@sendCode": {
+    "description": "Button for reset"
+  },
+
+  "emailSendError": "Unable to send email. Check the address.",
+  "@emailSendError": {
+    "description": "Error if sending fails"
+  },
+
+  "unknownError": "An error occurred.",
+  "@unknownError": {
+    "description": "Generic error"
+  },
+
+  "otpTitle": "Verification",
+  "@otpTitle": {
+    "description": "OTP screen AppBar title"
+  },
+
+  "enterCode": "Enter the code",
+  "@enterCode": {
+    "description": "Main title asking for OTP code"
+  },
+
+  "otpSentTo": "We sent a 6-digit code to\n{email}",
+  "@otpSentTo": {
+    "description": "Confirmation message for OTP sending",
+    "placeholders": {
+      "email": {
+        "type": "String",
+        "example": "example@mail.com"
+      }
+    }
+  },
+
+
+  "otpLabel": "6-digit code",
+  "@otpLabel": {
+    "description": "OTP input label"
+  },
+
+  "otpInvalidError": "Please enter a valid code.",
+  "@otpInvalidError": {
+    "description": "Error if OTP is incomplete"
+  },
+
+  "verifyButton": "Verify",
+  "@verifyButton": {
+    "description": "Button to verify OTP"
+  },
+
+  "otpIncorrectError": "Incorrect code. Please try again.",
+  "@otpIncorrectError": {
+    "description": "Error if OTP is wrong"
+  },
+
+  "resetPasswordTitle": "New Password",
+  "createNewPassword": "Create a new password",
+  "newPassword": "New password",
+  "confirmPassword": "Confirm password",
+  "passwordTooShort": "At least 8 characters required.",
+  "passwordMismatch": "Passwords do not match.",
+
+
+
+  "passwordChangedSuccess": "Password changed successfully!",
+  "resetFailed": "Unable to change the password. The code may have expired.",
+  "unexpectedError": "An unexpected error occurred.",
+
+  "notificationsTitle": "Notifications",
+  "@notificationsTitle": {
+    "description": "AppBar title for notifications"
+  },
+
+  "markAllAsRead": "Mark all as read",
+  "@markAllAsRead": {
+    "description": "Tooltip for mark all as read button"
+  },
+
+  "deleteAll": "Delete all",
+  "@deleteAll": {
+    "description": "Tooltip for delete all button"
+  },
+
+  "deleteAllConfirmationTitle": "Confirmation",
+  "@deleteAllConfirmationTitle": {
+    "description": "Title of delete confirmation dialog"
+  },
+
+  "deleteAllConfirmationMessage": "Do you really want to delete all your notifications? This action is irreversible.",
+  "@deleteAllConfirmationMessage": {
+    "description": "Confirmation dialog message for deleting notifications"
+  },
+
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Cancel button text"
+  },
+
+  "delete": "Delete",
+  "@delete": {
+    "description": "Delete button text"
+  },
+
+  "loadNotificationsError": "Unable to load notifications.",
+  "@loadNotificationsError": {
+    "description": "Error when notifications cannot load"
+  },
+
+  "markAllAsReadError": "Error: Unable to mark as read.",
+  "@markAllAsReadError": {
+    "description": "Error when marking notifications as read"
+  },
+
+  "deleteAllError": "Error: Unable to delete all.",
+  "@deleteAllError": {
+    "description": "Error when deleting all notifications"
+  },
+
+  "oops": "Oops!",
+  "@oops": {
+    "description": "Title of the error screen"
+  },
+
+  "noNotificationsTitle": "No notifications",
+  "@noNotificationsTitle": {
+    "description": "Title when notification list is empty"
+  },
+
+  "noNotificationsMessage": "Your important notifications will appear here.",
+  "@noNotificationsMessage": {
+    "description": "Message when notification list is empty"
+  },
+
+
+  "notificationDeleted": "Notification \"{title}\" deleted.",
+  "@notificationDeleted": {
+    "description": "Snackbar text after deleting a notification",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "New request"
+      }
+    }
+  },
+
+  "searchParishTitle": "Search a parish",
+  "searchHint": "Parish, city, district...",
+  "parishesSectionTitle": "Parishes",
+  "retryButton": "Retry",
+  "loadingErrorMessage": "Unable to load data",
+  "noParishesFound": "No parish found.",
+  "noParishesAvailable": "No parish available.",
+  "unknownParish": "Unknown parish",
+  "detailsButton": "Details",
+  "internetError": "No Internet connection. Check your network.",
+  "connectionError": "Connection error.",
+
+  "descriptionUnavailable": "Description unavailable.",
+  "offeringSuggested": "Suggested mass offering:",
+  "moreDetailsButton": "More details",
+  "addToFavorites": "Add to favorites",
+  "removeFromFavorites": "Remove from favorites",
+  "parishAddedFavorite": "Parish added to favorites!",
+  "parishRemovedFavorite": "Parish removed from favorites.",
+  "favoritesUpdateError": "Error updating favorites.",
+  "mapsOpenError": "Unable to open map application.",
+
+  "events_title": "Events",
+  "events_none": "No event for this category",
+  "events_none_with_dot": "No event for this category.",
+  "error_generic": "An error occurred.",
+  "error_no_internet": "No Internet. Check your network.",
+  "error_timeout": "Server not responding. Try again later.",
+  "tab_all": "All",
+
+  "requests_title": "My requests",
+  "tab_in_progress": "In progress",
+  "tab_history": "History",
+  "tab_favorites": "Favorites",
+
+  "error_loading": "Loading error",
+  "list_updated": "List updated",
+  "generic_error": "Error",
+  "unknown_date": "Unknown date",
+
+  "empty_requests": "No request found",
+  "empty_favorites": "No favorite",
+  "settings": "Settings",
+
+  "close": "Close",
+  "pay_now": "Pay now",
+  "print_receipt": "Print receipt",
+
+  "request_details_title": "Request details",
+  "intention": "Intention",
+  "parish": "Parish",
+  "date": "Date",
+  "celebration": "Celebration",
+  "intercessor": "Intercessor",
+  "offering": "Offering",
+
+  "no_favorite_title": "No favorite",
+  "no_result_title": "No result",
+  "no_favorite_message": "You haven't added any parish to your favorites yet. Tap ⭐️ to add one.",
+  "no_result_message": "No request matches this tab.",
+
+  "favorites_updated": "Favorites updated",
+  "parish_data_invalid": "Error: Invalid parish data",
+  "favorite_removed": "\"{parishName}\" removed from favorites",
+  "@favorite_removed": {
+    "placeholders": {
+      "parishName": {
+        "type": "Object"
+      }
+    }
+  },
+  "favorite_remove_error": "Error while removing favorite",
+
+  "nav_home": "Home",
+  "@nav_home": {
+    "description": "Tab label Home"
+  },
+
+  "nav_event": "Event",
+  "@nav_event": {
+    "description": "Tab label Event"
+  },
+
+  "nav_requests": "Requests",
+  "@nav_requests": {
+    "description": "Tab label My requests"
+  },
+
+  "nav_parish": "Parish",
+  "@nav_parish": {
+    "description": "Tab label Parish"
+  }
+}
