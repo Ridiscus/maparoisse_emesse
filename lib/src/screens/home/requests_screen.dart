@@ -10,7 +10,7 @@ import '../widgets/primary_button.dart';
 import '../../app_themes.dart';
 import 'dart:async';
 import 'package:maparoisse/src/screens/home/dashboard_screen.dart';
-
+import 'package:maparoisse/src/widgets/request_detail_modal.dart';
 
 
 class RequestsScreen extends StatefulWidget {
@@ -412,100 +412,8 @@ class _RequestsScreenState extends State<RequestsScreen>
 
 
 
-  Future<void> _submitDemande() async {
-    if (!_validateCurrentStep()) return;
-
-    setState(() => _isLoading = true);
-
-    try {
-      // ... (formatage date/heure/jours...)
-      final dateSouhaitee = DateFormat('dd/MM/yyyy').parse(_dateCtrl.text);
-      final dateSouhaiteeFormatted = DateFormat('yyyy-MM-dd').format(dateSouhaitee);
-      final heureSouhaiteeFormatted = _heureCtrl.text;
-      List<String>? jours;
-      if (_celebration == "Messe quotidienne") {
-        jours = _joursQuotidienne;
-      } else if (_celebration == "Messe dominicale") {
-        jours = _dimanches;
-      }
-
-      // 1. Appelle le service API
-      await _authService.createMassRequest(
-        paroisseId: _paroisseId!,
-        intercesseur: _intercesseurCtrl.text,
-        motif: _motifCtrl.text,
-        dateSouhaitee: dateSouhaiteeFormatted,
-        heureSouhaitee: heureSouhaiteeFormatted, // Nom corrigé
-        celebration: _celebration!,
-        nomDemandeur: _demandeurNom,
-        emailDemandeur: _demandeurEmail,
-        telDemandeur: _demandeurTel,
-        montant: _montantTotal,
-        joursSelectionnes: jours,
-      );
-
-      // 2. La création a réussi.
-      if (mounted) {
-
-        // a. On récupère la hauteur de l'écran
-        final double screenHeight = MediaQuery.of(context).size.height;
 
 
-        // 3. Affiche le message de succès (MAINTENANT)
-        // b. On affiche le SnackBar personnalisé
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 12),
-                Expanded( // Expanded évite que le texte ne déborde si l'écran est petit
-                  child: Text(
-                    "Demande enregistrée. Vous pouvez payer depuis 'Mes demandes'.",
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: AppTheme.successColor,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            // c. L'astuce du positionnement en haut :
-            // On pousse le snackbar vers le haut en mettant une marge en bas énorme
-            // (Hauteur écran - 140px environ pour laisser la place à la barre de statut)
-            margin: EdgeInsets.only(
-              bottom: screenHeight - 235,
-              left: 20,
-              right: 20,
-            ),
-            duration: const Duration(seconds: 4), // Reste affiché 4 secondes
-          ),
-        );
-
-        // --- FIN MODIFICATION ---
-
-        // 4. Réinitialise ce formulaire
-        _resetForm();
-
-        // 5. Change d'onglet pour revenir à la liste
-        // (En supposant que l'index de RequestsListScreen est 3)
-        DashboardScreenWithIndex.globalKey.currentState?.goToIndex(3);
-
-        // --- FIN CORRECTION ---
-      }
-
-    } catch (e) {
-      if (mounted) {
-        _showError('Erreur lors de l\'enregistrement : $e');
-      }
-    } finally {
-        if (mounted) {
-        setState(() => _isLoading = false);
-        }
-        }
-        }
 
 
 
@@ -535,6 +443,79 @@ class _RequestsScreenState extends State<RequestsScreen>
       _currentStep = 0;
       _pageController.jumpToPage(0);
     });
+  }
+
+
+
+
+  Future<void> _submitDemande() async {
+    // 1. Validation locale
+    if (!_validateCurrentStep()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      // Formatage des dates pour l'API
+      final dateSouhaitee = DateFormat('dd/MM/yyyy').parse(_dateCtrl.text);
+      final dateSouhaiteeFormatted = DateFormat('yyyy-MM-dd').format(dateSouhaitee);
+      final heureSouhaiteeFormatted = _heureCtrl.text;
+
+      // Gestion des jours sélectionnés
+      List<String>? jours;
+      if (_celebration == "Messe quotidienne") {
+        jours = _joursQuotidienne;
+      } else if (_celebration == "Messe dominicale") {
+        jours = _dimanches;
+      }
+
+      // 2. Appel API (Le code que tu m'as montré est bon)
+      final newRequestData = await _authService.createMassRequest(
+        paroisseId: _paroisseId!,
+        intercesseur: _intercesseurCtrl.text,
+        motif: _motifCtrl.text,
+        dateSouhaitee: dateSouhaiteeFormatted,
+        heureSouhaitee: heureSouhaiteeFormatted,
+        celebration: _celebration!,
+        nomDemandeur: _demandeurNom,
+        emailDemandeur: _demandeurEmail,
+        telDemandeur: _demandeurTel,
+        montant: _montantTotal,
+        joursSelectionnes: jours,
+      );
+
+      if (mounted) {
+        // 3. Succès ! On nettoie le formulaire
+        _resetForm();
+
+        // 4. On ouvre le Modal "Succès" (qui remonte du bas)
+        await showModalBottomSheet(
+          context: context,
+          isScrollControlled: true, // Important pour voir tout le contenu
+          backgroundColor: Colors.transparent, // Pour avoir les coins arrondis propres
+          builder: (context) => RequestDetailModal(
+            request: newRequestData, // On passe les données reçues de l'API
+            isSuccessMode: true,     // <--- C'EST ICI QU'ON ACTIVE LA COCHE VERTE
+          ),
+        );
+
+        // 5. Quand l'utilisateur ferme le modal, on va sur l'onglet "Mes demandes"
+        DashboardScreenWithIndex.globalKey.currentState?.goToIndex(3);
+      }
+
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Erreur : ${e.toString().replaceAll("Exception:", "")}'),
+              backgroundColor: AppTheme.errorColor
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
 
@@ -1645,8 +1626,6 @@ class _RequestsScreenState extends State<RequestsScreen>
 
 
 
-
-
   IconData _getCelebrationIcon(String type) {
     switch (type) {
       case 'Messe quotidienne':
@@ -1660,3 +1639,8 @@ class _RequestsScreenState extends State<RequestsScreen>
     }
   }
 }
+
+
+
+
+

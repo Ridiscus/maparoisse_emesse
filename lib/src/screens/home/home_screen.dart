@@ -13,7 +13,7 @@ import 'package:collection/collection.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:maparoisse/src/screens/home/settings_screen.dart';
-
+import 'package:maparoisse/src/screens/home/identification_screen.dart';
 
 
 
@@ -374,6 +374,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(height: 24),
 
                   _buildLocationCard(context),
+                  const SizedBox(height: 24),
+
+                  // --- NEW: Identification Sheet Button ---
+                  _buildIdentificationCard(context),
+                  // ----------------------------------------
 
                   // Espace supplémentaire en bas pour ne pas être caché par la BottomNavBar
                   const SizedBox(height: 80),
@@ -388,495 +393,526 @@ class _HomeScreenState extends State<HomeScreen> {
 
 
 
-  Widget _buildAppBarContent(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // --- WRAPPER CLICABLE POUR L'AVATAR ET STATUT ---
-        InkWell(
-          onTap: () {
-            // Navigue vers l'écran de modification du profil
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const EditProfileScreen()),
-            );
-            print('Avatar tapped, navigating to Edit Profile');
-          },
-          // Optionnel: Rendre l'effet d'ondulation circulaire si tu préfères
-          // customBorder: const CircleBorder(),
-          // Ou laisse rectangulaire pour inclure le texte "En ligne"
-          borderRadius: BorderRadius.circular(8), // Léger arrondi pour l'effet
-          child: Padding( // Ajoute un léger padding pour l'effet d'ondulation
-            padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
-            child: Column(
-              children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.grey[200],
-                  backgroundImage: (_userAvatarUrl != null && _userAvatarUrl!.isNotEmpty)
-                      ? NetworkImage(_userAvatarUrl!)
-                      : null,
-                  child: (_userAvatarUrl == null || _userAvatarUrl!.isEmpty)
-                      ? const Icon(Icons.person, size: 30, color: Colors.grey)
-                      : null,
-                ),
-                const SizedBox(height: 4),
-                // --- DÉBUT MODIFICATION ---
-                Text(
-                  l10n.online,
-                  style: TextStyle(
-                    fontSize: 10,
-                    // Petit bonus : GreenAccent ressort mieux en mode sombre que green[600]
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.greenAccent
-                        : Colors.green[600],
-                    fontWeight: FontWeight.bold,
-                  ),
-                )
-                    .animate(
-                  onPlay: (controller) => controller.repeat(reverse: true), // Boucle infinie aller-retour
-                )
-                    .fade(
-                  duration: 1000.ms, // Durée d'un cycle (1 seconde)
-                  begin: 0.4, // Commence à 40% d'opacité
-                  end: 1.0,   // Finit à 100% d'opacité
-                ),
-                // --- FIN MODIFICATION ---
-              ],
+  // --- NEW WIDGET: Identification Card Button ---
+  Widget _buildIdentificationCard(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return InkWell(
+      onTap: () {
+        // Navigate to the Identification Screen (Create this screen next)
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const IdentificationScreen()),
+        );
+      },
+      borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardTheme.color, // Use theme card color
+          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+          boxShadow: AppTheme.cardShadow,
+          border: Border.all(color: const Color(0xFFC0A040).withOpacity(0.3)), // Optional: Golden border
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFC0A040).withOpacity(0.1), // Light gold background
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.person_pin_rounded, color: Color(0xFFC0A040), size: 28),
             ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Fiche d'identification", // Replace with l10n.identificationSheetTitle
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Remplissez votre profil paroissial", // Replace with l10n.identificationSheetSubtitle
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+
+
+
+
+Widget _buildAppBarContent(BuildContext context) {
+  final l10n = AppLocalizations.of(context)!;
+
+  return Row(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: [
+      // --- WRAPPER CLICABLE POUR L'AVATAR ET STATUT ---
+      InkWell(
+        onTap: () {
+          // Navigue vers l'écran de modification du profil
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+          );
+          print('Avatar tapped, navigating to Edit Profile');
+        },
+        // Optionnel: Rendre l'effet d'ondulation circulaire si tu préfères
+        // customBorder: const CircleBorder(),
+        // Ou laisse rectangulaire pour inclure le texte "En ligne"
+        borderRadius: BorderRadius.circular(8), // Léger arrondi pour l'effet
+        child: Padding( // Ajoute un léger padding pour l'effet d'ondulation
+          padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
+          child: Column(
+            children: [
+              CircleAvatar(
+                radius: 30,
+                backgroundColor: Colors.grey[200],
+                backgroundImage: (_userAvatarUrl != null && _userAvatarUrl!.isNotEmpty)
+                    ? NetworkImage(_userAvatarUrl!)
+                    : null,
+                child: (_userAvatarUrl == null || _userAvatarUrl!.isEmpty)
+                    ? const Icon(Icons.person, size: 30, color: Colors.grey)
+                    : null,
+              ),
+              const SizedBox(height: 4),
+              // --- DÉBUT MODIFICATION ---
+              Text(
+                l10n.online,
+                style: TextStyle(
+                  fontSize: 10,
+                  // Petit bonus : GreenAccent ressort mieux en mode sombre que green[600]
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Colors.greenAccent
+                      : Colors.green[600],
+                  fontWeight: FontWeight.bold,
+                ),
+              )
+                  .animate(
+                onPlay: (controller) => controller.repeat(reverse: true), // Boucle infinie aller-retour
+              )
+                  .fade(
+                duration: 1000.ms, // Durée d'un cycle (1 seconde)
+                begin: 0.4, // Commence à 40% d'opacité
+                end: 1.0,   // Finit à 100% d'opacité
+              ),
+              // --- FIN MODIFICATION ---
+            ],
           ),
         ),
-        // --- FIN WRAPPER ---
-        const SizedBox(width: 12),
-        // Textes de bienvenue (inchangés)
-        Expanded(
+      ),
+      // --- FIN WRAPPER ---
+      const SizedBox(width: 12),
+      // Textes de bienvenue (inchangés)
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ... (Text 'Bienvenue' et 'Que la paix...')
+            Text(
+              l10n.welcomeUser(_userName),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: 20, // Tu peux remettre si besoin
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              l10n.peaceMessage, // TODO: Localiser si nécessaire
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(width: 4),
+
+
+      // --- 3. NOUVELLE ICÔNE PARAMÈTRES (DROITE) ---
+      IconButton(
+        icon: Icon(Icons.settings_outlined, color: Theme.of(context).colorScheme.onSurface, size: 28),
+        tooltip: l10n.settings,
+        onPressed: () {
+          // Navigation vers SettingsScreen
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const SettingsScreen()),
+          );
+        },
+      ),
+      // Cloche de notification (inchangée)
+      // 1. On utilise un Consumer pour écouter les changements
+      Consumer<AuthService>(
+        builder: (context, authService, child) {
+
+          // 2. On utilise un Stack pour superposer le point rouge
+          return Stack(
+            alignment: Alignment.center,
+            children: [
+              // Le bouton icône
+              IconButton(
+                icon: Icon(Icons.notifications_outlined, color: Theme.of(context).colorScheme.onSurface, size: 28),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                  );
+                  print('Notifications tapped');
+                },
+              ),
+
+              // 3. Le point rouge (conditionnel)
+              if (authService.hasUnreadNotifications)
+                Positioned(
+                  top: 10, // Ajuste la position verticale
+                  right: 10, // Ajuste la position horizontale
+                  child: Container(
+                    width: 10, // Taille du point
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1.5), // Petite bordure blanche
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      )
+    ],
+  );
+}
+
+
+
+Widget _buildStatusSection(BuildContext context) {
+  final l10n = AppLocalizations.of(context)!;
+
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        l10n.homeStatusTitle,
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).colorScheme.onSurface,
+          fontSize: 22,
+        ),
+      ),
+      const SizedBox(height: 12),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          for (var item in [
+            {
+              'count': _pendingCount,
+              'title': l10n.homeStatusPending,
+              'color': Colors.amber,
+              'icon': FaIcon(FontAwesomeIcons.hourglassHalf, color: Colors.white, size: 20),
+              'filter': (Map<String, dynamic> r) =>
+              (r['statut'] ?? '').toLowerCase() == 'en_attente_paiement',
+              'modalTitle': l10n.modal_pending,
+            },
+            {
+              'count': _celebratedCount,
+              'title': l10n.homeStatusCelebrated,
+              'color': _greenColor,
+              'icon': FaIcon(FontAwesomeIcons.circleCheck, color: Colors.white, size: 20),
+              'filter': (Map<String, dynamic> r) =>
+              (r['statut'] ?? '').toLowerCase() == 'celebre',
+              'modalTitle': l10n.modal_celebrated,
+            },
+
+            {
+              'count': _upcomingCount,
+              'title': l10n.homeStatusUpcoming,
+              'color': _blueColor,
+              'icon': FaIcon(FontAwesomeIcons.calendarDay, color: Colors.white, size: 20),
+
+              // --- CORRECTION DU FILTRE ---
+              'filter': (Map<String, dynamic> r) {
+                String status = (r['statut'] ?? '').toString().toLowerCase();
+
+                // 1. RÈGLE D'OR : On EXCLUT explicitement "en_attente_paiement"
+                // Car ceux-là vont dans la carte Jaune (En attente).
+                if (status == 'en_attente_paiement') return false;
+
+                // 2. On EXCLUT Célébré et Annulé
+                if (status.contains('celebre')) return false;
+                if (status.contains('annul')) return false;
+
+                // 3. On INCLUT seulement Confirmé ou En attente (de confirmation)
+                // "en attente" (avec espace) = Payé mais pas encore validé par la paroisse
+                // "confirmee" = Validé
+                bool isConfirmed = status.contains('confirm');
+                bool isWaitingValidation = status == 'en attente';
+
+                // Vérification supplémentaire via les paiements (optionnel mais sécurisé)
+                List<dynamic> p = r['paiements'] ?? [];
+                bool isPaid = p.isNotEmpty && (p[0]['statut'] == 'paye' || p[0]['statut'] == 'confirmee');
+
+                return isConfirmed || isWaitingValidation || isPaid;
+              },
+              // -----------------------------
+
+              'modalTitle': l10n.modal_upcoming,
+            },
+
+          ])
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                  onTap: () => _showStatusModal(
+                    item['modalTitle'] as String,
+                    item['filter'] as bool Function(Map<String, dynamic>),
+                  ),
+                  child: _buildStatusCard(
+                    item['count'] as int,
+                    item['title'] as String,
+                    item['color'] as Color,
+                    item['icon'] as FaIcon,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      )
+    ],
+  );
+}
+
+
+
+
+/// NOUVEAU : Ouvre le modal avec la liste filtrée
+void _showStatusModal(String title, bool Function(Map<String, dynamic>) filter) {
+  // Applique le filtre sur la liste complète des demandes
+  final List<Map<String, dynamic>> filteredList = _allMassRequests
+      .where((r) => filter(r as Map<String, dynamic>))
+      .cast<Map<String, dynamic>>()
+      .toList();
+
+  // Trie la liste filtrée par date (la plus récente en premier)
+  filteredList.sort((a, b) =>
+      _parseDateRobust(b['created_at'])
+          .compareTo(_parseDateRobust(a['created_at'])));
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true, // Permet au modal de prendre plus de hauteur
+    backgroundColor: Colors.transparent,
+    builder: (context) {
+      return _StatusListModal(
+        title: title,
+        requests: filteredList,
+        // Passe les helpers nécessaires au modal
+        findParishName: _findParishName,
+        formatDateTime: (date, time) {
+          try {
+            final dateTime = DateTime.parse('$date $time');
+            return DateFormat('dd/MM/yyyy / HH:mm', 'fr_FR').format(dateTime);
+          } catch (e) {
+            return date;
+          }
+        },
+        buildStatusBadge: (status) {
+          // Badge simplifié
+          return _buildStatusBadge(status, null);
+        },
+      );
+    },
+  );
+}
+
+
+
+
+
+Widget _buildStatusCard(int count, String title, Color color, FaIcon icon) {
+  return SizedBox(
+    // Fixe la hauteur globale du card (tu peux ajuster)
+    height: 100,
+    child: Stack(
+      clipBehavior: Clip.none, // Permet au badge de déborder
+      fit: StackFit.expand, // <-- IMPORTANT : force le Stack à remplir l'Expanded parent
+      children: [
+        // 1. La carte principale (remplit désormais toute la largeur)
+        Container(
+          padding: const EdgeInsets.all(16.0),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.95),
+            borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+            border: Border.all(
+              color: color.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // ... (Text 'Bienvenue' et 'Que la paix...')
+              // L'icône
+              icon,
+
+              // Le titre
               Text(
-                l10n.welcomeUser(_userName),
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                title,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontSize: 20, // Tu peux remettre si besoin
+                  color: Colors.white,
                 ),
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                l10n.peaceMessage, // TODO: Localiser si nécessaire
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                  fontSize: 12,
-                ),
               ),
             ],
           ),
         ),
-        const SizedBox(width: 4),
 
-
-        // --- 3. NOUVELLE ICÔNE PARAMÈTRES (DROITE) ---
-        IconButton(
-          icon: Icon(Icons.settings_outlined, color: Theme.of(context).colorScheme.onSurface, size: 28),
-          tooltip: l10n.settings,
-          onPressed: () {
-            // Navigation vers SettingsScreen
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const SettingsScreen()),
-            );
-          },
-        ),
-        // Cloche de notification (inchangée)
-        // 1. On utilise un Consumer pour écouter les changements
-        Consumer<AuthService>(
-          builder: (context, authService, child) {
-
-            // 2. On utilise un Stack pour superposer le point rouge
-            return Stack(
-              alignment: Alignment.center,
-              children: [
-                // Le bouton icône
-                IconButton(
-                  icon: Icon(Icons.notifications_outlined, color: Theme.of(context).colorScheme.onSurface, size: 28),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-                    );
-                    print('Notifications tapped');
-                  },
-                ),
-
-                // 3. Le point rouge (conditionnel)
-                if (authService.hasUnreadNotifications)
-                  Positioned(
-                    top: 10, // Ajuste la position verticale
-                    right: 10, // Ajuste la position horizontale
-                    child: Container(
-                      width: 10, // Taille du point
-                      height: 10,
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 1.5), // Petite bordure blanche
-                      ),
-                    ),
-                  ),
-              ],
-            );
-          },
-        )
-      ],
-    );
-  }
-
-
-
-  Widget _buildStatusSection(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          l10n.homeStatusTitle,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: Theme.of(context).colorScheme.onSurface,
-            fontSize: 22,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            for (var item in [
-              {
-                'count': _pendingCount,
-                'title': l10n.homeStatusPending,
-                'color': Colors.amber,
-                'icon': FaIcon(FontAwesomeIcons.hourglassHalf, color: Colors.white, size: 20),
-                'filter': (Map<String, dynamic> r) =>
-                (r['statut'] ?? '').toLowerCase() == 'en_attente_paiement',
-                'modalTitle': l10n.modal_pending,
-              },
-              {
-                'count': _celebratedCount,
-                'title': l10n.homeStatusCelebrated,
-                'color': _greenColor,
-                'icon': FaIcon(FontAwesomeIcons.circleCheck, color: Colors.white, size: 20),
-                'filter': (Map<String, dynamic> r) =>
-                (r['statut'] ?? '').toLowerCase() == 'celebre',
-                'modalTitle': l10n.modal_celebrated,
-              },
-
-              {
-                'count': _upcomingCount,
-                'title': l10n.homeStatusUpcoming,
-                'color': _blueColor,
-                'icon': FaIcon(FontAwesomeIcons.calendarDay, color: Colors.white, size: 20),
-
-                // --- CORRECTION DU FILTRE ---
-                'filter': (Map<String, dynamic> r) {
-                  String status = (r['statut'] ?? '').toString().toLowerCase();
-
-                  // 1. RÈGLE D'OR : On EXCLUT explicitement "en_attente_paiement"
-                  // Car ceux-là vont dans la carte Jaune (En attente).
-                  if (status == 'en_attente_paiement') return false;
-
-                  // 2. On EXCLUT Célébré et Annulé
-                  if (status.contains('celebre')) return false;
-                  if (status.contains('annul')) return false;
-
-                  // 3. On INCLUT seulement Confirmé ou En attente (de confirmation)
-                  // "en attente" (avec espace) = Payé mais pas encore validé par la paroisse
-                  // "confirmee" = Validé
-                  bool isConfirmed = status.contains('confirm');
-                  bool isWaitingValidation = status == 'en attente';
-
-                  // Vérification supplémentaire via les paiements (optionnel mais sécurisé)
-                  List<dynamic> p = r['paiements'] ?? [];
-                  bool isPaid = p.isNotEmpty && (p[0]['statut'] == 'paye' || p[0]['statut'] == 'confirmee');
-
-                  return isConfirmed || isWaitingValidation || isPaid;
-                },
-                // -----------------------------
-
-                'modalTitle': l10n.modal_upcoming,
-              },
-
-            ])
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                    onTap: () => _showStatusModal(
-                      item['modalTitle'] as String,
-                      item['filter'] as bool Function(Map<String, dynamic>),
-                    ),
-                    child: _buildStatusCard(
-                      item['count'] as int,
-                      item['title'] as String,
-                      item['color'] as Color,
-                      item['icon'] as FaIcon,
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        )
-      ],
-    );
-  }
-
-
-
-
-  /// NOUVEAU : Ouvre le modal avec la liste filtrée
-  void _showStatusModal(String title, bool Function(Map<String, dynamic>) filter) {
-    // Applique le filtre sur la liste complète des demandes
-    final List<Map<String, dynamic>> filteredList = _allMassRequests
-        .where((r) => filter(r as Map<String, dynamic>))
-        .cast<Map<String, dynamic>>()
-        .toList();
-
-    // Trie la liste filtrée par date (la plus récente en premier)
-    filteredList.sort((a, b) =>
-        _parseDateRobust(b['created_at'])
-            .compareTo(_parseDateRobust(a['created_at'])));
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true, // Permet au modal de prendre plus de hauteur
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return _StatusListModal(
-          title: title,
-          requests: filteredList,
-          // Passe les helpers nécessaires au modal
-          findParishName: _findParishName,
-          formatDateTime: (date, time) {
-            try {
-              final dateTime = DateTime.parse('$date $time');
-              return DateFormat('dd/MM/yyyy / HH:mm', 'fr_FR').format(dateTime);
-            } catch (e) {
-              return date;
-            }
-          },
-          buildStatusBadge: (status) {
-            // Badge simplifié
-            return _buildStatusBadge(status, null);
-          },
-        );
-      },
-    );
-  }
-
-
-
-
-
-  Widget _buildStatusCard(int count, String title, Color color, FaIcon icon) {
-    return SizedBox(
-      // Fixe la hauteur globale du card (tu peux ajuster)
-      height: 100,
-      child: Stack(
-        clipBehavior: Clip.none, // Permet au badge de déborder
-        fit: StackFit.expand, // <-- IMPORTANT : force le Stack à remplir l'Expanded parent
-        children: [
-          // 1. La carte principale (remplit désormais toute la largeur)
-          Container(
-            padding: const EdgeInsets.all(16.0),
+        // 2. Le Badge (Positionné en haut à droite)
+        Positioned(
+          top: -8,
+          right: -8, // collé correctement même si la carte remplit toute la largeur
+          child: Container(
+            padding: const EdgeInsets.all(6),
+            constraints: const BoxConstraints(
+              minWidth: 28,
+              minHeight: 28,
+            ),
             decoration: BoxDecoration(
-              color: color.withOpacity(0.95),
-              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-              border: Border.all(
-                color: color.withOpacity(0.3),
-                width: 1,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                // L'icône
-                icon,
-
-                // Le titre
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+              color: color,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.15),
+                  blurRadius: 5,
+                  offset: const Offset(0, 2),
+                )
               ],
-            ),
-          ),
-
-          // 2. Le Badge (Positionné en haut à droite)
-          Positioned(
-            top: -8,
-            right: -8, // collé correctement même si la carte remplit toute la largeur
-            child: Container(
-              padding: const EdgeInsets.all(6),
-              constraints: const BoxConstraints(
-                minWidth: 28,
-                minHeight: 28,
-              ),
-              decoration: BoxDecoration(
-                color: color,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.15),
-                    blurRadius: 5,
-                    offset: const Offset(0, 2),
-                  )
-                ],
-              ),
-              child: Center(
-                child: Text(
-                  count.toString(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-
-
-
-  /// MODIFIÉ : _buildStatusBadge (utilise la logique 'switch' complète)
-  Widget _buildStatusBadge(String status, List<dynamic>? paiements) {
-    final l10n = AppLocalizations.of(context)!;
-
-    Color backgroundColor;
-    Color textColor;
-    String statusText = status;
-    String statusLower = status.toLowerCase();
-
-    // Utilise la couleur primaire du thème au lieu de _ocreColor fixe
-    final Color primaryColor = Theme.of(context).primaryColor;
-
-    // Logique 'switch' (plus robuste)
-    switch (statusLower) {
-      case 'en_attente_paiement': // Non payé (underscore)
-        backgroundColor = _ocreColor.withOpacity(0.15);
-        textColor = primaryColor;
-        statusText = l10n.status_waiting_payment;
-        break;
-
-      case 'en attente': // Payé, en att. confirmation (AVEC ESPACE)
-        backgroundColor = AppTheme.successColor.withOpacity(0.15);
-        textColor = AppTheme.successColor;
-        statusText = l10n.status_waiting_confirmation;
-        break;
-
-      case 'confirmee':
-        backgroundColor = AppTheme.successColor.withOpacity(0.15);
-        textColor = AppTheme.successColor;
-        statusText = l10n.status_confirmed;
-        break;
-
-      case 'celebre': // Célébré
-        backgroundColor = AppTheme.infoColor.withOpacity(0.15);
-        textColor = AppTheme.infoColor;
-        statusText = l10n.status_celebrated;
-        break;
-
-      case 'annulee':
-        backgroundColor = AppTheme.errorColor.withOpacity(0.15);
-        textColor = AppTheme.errorColor;
-        statusText = l10n.status_cancelled;
-        break;
-
-      default:
-      // Si le statut est inconnu, on vérifie s'il est payé
-      // (C'est une sécurité de l'ancienne logique que je garde)
-        bool isPaid = paiements?.isNotEmpty == true &&
-            (paiements![0]['statut'] == 'paye' || paiements![0]['statut'] == 'confirmee');
-
-        if (isPaid) {
-          backgroundColor = AppTheme.successColor.withOpacity(0.15);
-          textColor = AppTheme.successColor;
-          statusText = l10n.status_waiting_confirmation;
-        } else {
-          backgroundColor = Colors.grey.withOpacity(0.15);
-          textColor = Colors.grey;
-          statusText = status; // Affiche le statut inconnu
-        }
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-      ),
-      child: Text(
-        statusText,
-        style: TextStyle( color: textColor, fontWeight: FontWeight.bold, fontSize: 11),
-      ),
-    );
-  }
-
-
-
-  Widget _buildNextMassesSection(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    if (_upcomingMasses.isEmpty) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l10n.homeUpcomingSectionTitle,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: Theme.of(context).colorScheme.onSurface,
-              fontSize: 22,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              // ✅ CORRECTION : Utilise la couleur de carte du thème (Gris foncé en sombre)
-              color: Theme.of(context).cardTheme.color,
-
-              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-              boxShadow: AppTheme.cardShadow,
             ),
             child: Center(
               child: Text(
-                l10n.homeNoUpcoming,
-                // ✅ CORRECTION : Texte gris adapté au mode
-                style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+                count.toString(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
             ),
-          )
-        ],
-      );
-    }
-    // (Copie juste le return du début, le reste est géré plus bas)
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+
+
+
+/// MODIFIÉ : _buildStatusBadge (utilise la logique 'switch' complète)
+Widget _buildStatusBadge(String status, List<dynamic>? paiements) {
+  final l10n = AppLocalizations.of(context)!;
+
+  Color backgroundColor;
+  Color textColor;
+  String statusText = status;
+  String statusLower = status.toLowerCase();
+
+  // Utilise la couleur primaire du thème au lieu de _ocreColor fixe
+  final Color primaryColor = Theme.of(context).primaryColor;
+
+  // Logique 'switch' (plus robuste)
+  switch (statusLower) {
+    case 'en_attente_paiement': // Non payé (underscore)
+      backgroundColor = _ocreColor.withOpacity(0.15);
+      textColor = primaryColor;
+      statusText = l10n.status_waiting_payment;
+      break;
+
+    case 'en attente': // Payé, en att. confirmation (AVEC ESPACE)
+      backgroundColor = AppTheme.successColor.withOpacity(0.15);
+      textColor = AppTheme.successColor;
+      statusText = l10n.status_waiting_confirmation;
+      break;
+
+    case 'confirmee':
+      backgroundColor = AppTheme.successColor.withOpacity(0.15);
+      textColor = AppTheme.successColor;
+      statusText = l10n.status_confirmed;
+      break;
+
+    case 'celebre': // Célébré
+      backgroundColor = AppTheme.infoColor.withOpacity(0.15);
+      textColor = AppTheme.infoColor;
+      statusText = l10n.status_celebrated;
+      break;
+
+    case 'annulee':
+      backgroundColor = AppTheme.errorColor.withOpacity(0.15);
+      textColor = AppTheme.errorColor;
+      statusText = l10n.status_cancelled;
+      break;
+
+    default:
+    // Si le statut est inconnu, on vérifie s'il est payé
+    // (C'est une sécurité de l'ancienne logique que je garde)
+      bool isPaid = paiements?.isNotEmpty == true &&
+          (paiements![0]['statut'] == 'paye' || paiements![0]['statut'] == 'confirmee');
+
+      if (isPaid) {
+        backgroundColor = AppTheme.successColor.withOpacity(0.15);
+        textColor = AppTheme.successColor;
+        statusText = l10n.status_waiting_confirmation;
+      } else {
+        backgroundColor = Colors.grey.withOpacity(0.15);
+        textColor = Colors.grey;
+        statusText = status; // Affiche le statut inconnu
+      }
+  }
+
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+    decoration: BoxDecoration(
+      color: backgroundColor,
+      borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+    ),
+    child: Text(
+      statusText,
+      style: TextStyle( color: textColor, fontWeight: FontWeight.bold, fontSize: 11),
+    ),
+  );
+}
+
+
+
+Widget _buildNextMassesSection(BuildContext context) {
+  final l10n = AppLocalizations.of(context)!;
+
+  if (_upcomingMasses.isEmpty) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -889,166 +925,199 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         const SizedBox(height: 12),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: _upcomingMasses.take(3).map((mass) => Padding(
-              padding: const EdgeInsets.only(right: 12.0),
-              child: _buildNextMassCard(mass),
-            )).toList(),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            // ✅ CORRECTION : Utilise la couleur de carte du thème (Gris foncé en sombre)
+            color: Theme.of(context).cardTheme.color,
+
+            borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+            boxShadow: AppTheme.cardShadow,
           ),
-        ),
+          child: Center(
+            child: Text(
+              l10n.homeNoUpcoming,
+              // ✅ CORRECTION : Texte gris adapté au mode
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+            ),
+          ),
+        )
       ],
     );
   }
-
-
-
-
-
-  Widget _buildNextMassCard(Map<String, dynamic> mass) {
-    // ... (Tes déclarations de variables date, time, etc. ne changent pas) ...
-    final String date = mass['date_souhaitee'];
-    final String time = mass['heure_souhaitee'];
-    final String intention = mass['motif_intention'] ?? 'Intention inconnue';
-    final int parishId = mass['paroisse_id'];
-    final List<dynamic>? paiements = mass['paiements'] as List?;
-    final String parishName = _findParishName(parishId);
-
-    DateTime dateTime;
-    try {
-      dateTime = DateTime.parse(date + ' ' + time);
-    } catch(e) {
-      dateTime = DateTime.now();
-    }
-
-    String formattedDate = DateFormat('EEEE d MMMM', 'fr_FR').format(dateTime);
-    String formattedTime = DateFormat('HH:mm').format(dateTime);
-
-    return Container(
-      width: 220,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        // ✅ CORRECTION : Utilise la couleur dynamique du thème
-        color: Theme.of(context).cardTheme.color,
-
-        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-        boxShadow: AppTheme.cardShadow,
+  // (Copie juste le return du début, le reste est géré plus bas)
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        l10n.homeUpcomingSectionTitle,
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: Theme.of(context).colorScheme.onSurface,
+          fontSize: 22,
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            formattedDate,
-            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            formattedTime,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface,),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            intention,
-            style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w500),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            parishName,
-            style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),),  maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerRight,
-            child: _buildStatusBadge(mass['statut'] ?? 'inconnu', paiements),
+      const SizedBox(height: 12),
+      SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: _upcomingMasses.take(3).map((mass) => Padding(
+            padding: const EdgeInsets.only(right: 12.0),
+            child: _buildNextMassCard(mass),
+          )).toList(),
+        ),
+      ),
+    ],
+  );
+}
+
+
+
+
+
+Widget _buildNextMassCard(Map<String, dynamic> mass) {
+  // ... (Tes déclarations de variables date, time, etc. ne changent pas) ...
+  final String date = mass['date_souhaitee'];
+  final String time = mass['heure_souhaitee'];
+  final String intention = mass['motif_intention'] ?? 'Intention inconnue';
+  final int parishId = mass['paroisse_id'];
+  final List<dynamic>? paiements = mass['paiements'] as List?;
+  final String parishName = _findParishName(parishId);
+
+  DateTime dateTime;
+  try {
+    dateTime = DateTime.parse(date + ' ' + time);
+  } catch(e) {
+    dateTime = DateTime.now();
+  }
+
+  String formattedDate = DateFormat('EEEE d MMMM', 'fr_FR').format(dateTime);
+  String formattedTime = DateFormat('HH:mm').format(dateTime);
+
+  return Container(
+    width: 220,
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      // ✅ CORRECTION : Utilise la couleur dynamique du thème
+      color: Theme.of(context).cardTheme.color,
+
+      borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+      boxShadow: AppTheme.cardShadow,
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          formattedDate,
+          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontWeight: FontWeight.w500),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          formattedTime,
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.onSurface,),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          intention,
+          style: TextStyle(fontSize: 13, color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w500),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 4),
+        Text(
+          parishName,
+          style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),),  maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 12),
+        Align(
+          alignment: Alignment.centerRight,
+          child: _buildStatusBadge(mass['statut'] ?? 'inconnu', paiements),
+        ),
+      ],
+    ),
+  );
+}
+
+
+
+
+
+
+
+Widget _buildLocationCard(BuildContext context) {
+  final l10n = AppLocalizations.of(context)!;
+
+  return InkWell( // Rendre la carte cliquable
+    onTap: _openMap, // Appelle la fonction pour ouvrir la carte
+    borderRadius: BorderRadius.circular(AppTheme.radiusMedium), // Pour l'effet d'ondulation
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+      decoration: BoxDecoration(
+        // Nouveau design avec dégradé (optionnel)
+        gradient: LinearGradient(
+          colors: [
+            AppTheme.infoColor.withOpacity(0.8),
+            AppTheme.infoColor,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        // Ou garde une couleur unie si tu préfères:
+        // color: AppTheme.primaryColor,
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.infoColor.withOpacity(0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-    );
-  }
-
-
-
-
-
-
-
-  Widget _buildLocationCard(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-
-    return InkWell( // Rendre la carte cliquable
-      onTap: _openMap, // Appelle la fonction pour ouvrir la carte
-      borderRadius: BorderRadius.circular(AppTheme.radiusMedium), // Pour l'effet d'ondulation
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-        decoration: BoxDecoration(
-          // Nouveau design avec dégradé (optionnel)
-          gradient: LinearGradient(
-            colors: [
-              AppTheme.infoColor.withOpacity(0.8),
-              AppTheme.infoColor,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+      child: Row(
+        children: [
+          Icon(Icons.my_location, color: Colors.white, size: 32), // Icône plus visible
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Votre Position Actuelle', // Titre fixe
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: Colors.white70, // Texte blanc semi-transparent
+                  ),
+                ),
+                const SizedBox(height: 2),
+                // Affiche un indicateur de chargement ou la localisation
+                _isFetchingLocation
+                    ? const SizedBox(
+                  height: 16, // Hauteur fixe pour éviter les sauts d'UI
+                  width: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+                    : Text(
+                  _displayLocation, // Affiche la localisation récupérée ou message d'erreur
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.bold, // Plus gras
+                    color: Colors.white, // Texte blanc
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
-          // Ou garde une couleur unie si tu préfères:
-          // color: AppTheme.primaryColor,
-          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.infoColor.withOpacity(0.3),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.my_location, color: Colors.white, size: 32), // Icône plus visible
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Votre Position Actuelle', // Titre fixe
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: Colors.white70, // Texte blanc semi-transparent
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  // Affiche un indicateur de chargement ou la localisation
-                  _isFetchingLocation
-                      ? const SizedBox(
-                    height: 16, // Hauteur fixe pour éviter les sauts d'UI
-                    width: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                      : Text(
-                    _displayLocation, // Affiche la localisation récupérée ou message d'erreur
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.bold, // Plus gras
-                      color: Colors.white, // Texte blanc
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Icon(Icons.launch, color: Colors.white70, size: 20), // Icône pour indiquer l'ouverture
-          ],
-        ),
+          const SizedBox(width: 8),
+          const Icon(Icons.launch, color: Colors.white70, size: 20), // Icône pour indiquer l'ouverture
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
 
 }

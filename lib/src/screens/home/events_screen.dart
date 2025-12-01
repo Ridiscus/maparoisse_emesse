@@ -83,7 +83,7 @@ class EventsScreen extends StatefulWidget {
 
 class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMixin {
   late TabController _tabController;
-  CalendarFormat _calendarFormat = CalendarFormat.month;
+  CalendarFormat _calendarFormat = CalendarFormat.week;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
 
@@ -347,14 +347,15 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
 
 
 
+
+
   Widget _buildCalendar() {
-    final theme = Theme.of(context); // Raccourci thème
+    final theme = Theme.of(context);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.only(bottom: 8), // Petit padding en bas
       decoration: BoxDecoration(
-        // ✅ CORRECTION 1 : Fond dynamique (Blanc ou Gris foncé)
         color: theme.cardTheme.color,
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         boxShadow: AppTheme.cardShadow,
@@ -365,6 +366,15 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
         lastDay: DateTime.utc(2030, 12, 31),
         focusedDay: _focusedDay,
         calendarFormat: _calendarFormat,
+
+        // --- NOUVEAU : CONFIGURATION DES FORMATS ---
+        // 1. On définit les textes en français et on limite à Mois/Semaine (on enlève "2 semaines")
+        availableCalendarFormats: const {
+          CalendarFormat.month: 'Mois',
+          CalendarFormat.week: 'Semaine',
+        },
+        // -------------------------------------------
+
         selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
         onDaySelected: (selectedDay, focusedDay) {
           if (!isSameDay(_selectedDay, selectedDay)) {
@@ -383,40 +393,50 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
           _focusedDay = focusedDay;
         },
 
-        // ✅ CORRECTION 2 : Styles des jours pour qu'ils soient visibles
         calendarStyle: CalendarStyle(
-          // Jours normaux (Blanc en sombre, Noir en clair)
           defaultTextStyle: TextStyle(color: theme.colorScheme.onSurface),
-          // Jours du week-end
           weekendTextStyle: TextStyle(color: theme.colorScheme.onSurface),
-          // Jours hors du mois
           outsideTextStyle: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.3)),
-
           todayDecoration: BoxDecoration(
             color: AppTheme.primaryColor.withOpacity(0.5),
             shape: BoxShape.circle,
           ),
-          selectedDecoration: BoxDecoration(
+          selectedDecoration: const BoxDecoration( // J'ai ajouté const pour optimiser
             color: AppTheme.primaryColor,
             shape: BoxShape.circle,
           ),
         ),
 
         headerStyle: HeaderStyle(
-          formatButtonVisible: false,
           titleCentered: true,
-          // ✅ CORRECTION 3 : Titre du mois
           titleTextStyle: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: theme.colorScheme.onSurface,
           ),
-          leftChevronIcon: Icon(Icons.chevron_left, color: AppTheme.primaryColor),
-          rightChevronIcon: Icon(Icons.chevron_right, color: AppTheme.primaryColor),
+          leftChevronIcon: const Icon(Icons.chevron_left, color: AppTheme.primaryColor),
+          rightChevronIcon: const Icon(Icons.chevron_right, color: AppTheme.primaryColor),
+
+          // --- NOUVEAU : LE BOUTON POUR PLIER/DÉPLIER ---
+          formatButtonVisible: true, // On l'affiche pour permettre à l'user de changer
+          formatButtonShowsNext: false, // Affiche le mode ACTUEL (ex: "Semaine")
+          formatButtonTextStyle: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold
+          ),
+          formatButtonDecoration: BoxDecoration(
+            color: AppTheme.primaryColor,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          // ----------------------------------------------
         ),
       ),
     );
   }
+
+
+
 
 
   Widget _buildTabBar() {

@@ -1742,6 +1742,100 @@ class AuthService extends ChangeNotifier {
   }
 
 
+
+  // --- NOUVEAU : Enregistrer la fiche fidèles (Multipart pour la photo) ---
+  Future<void> submitIdentification({
+    required String nomPrenom,          // Backend: nom_prenom
+    required String dateNaissance,      // Backend: date_naissance
+    required String sexe,               // Backend: sexe
+    required String situationMatrimoniale, // Backend: situation_matrimoniale
+    required String adresse,            // Backend: adresse
+    required String statutActivite,     // Backend: statut_activite
+    required String nomParoisse,        // Backend: nom_paroisse
+    required String telephone,          // Backend: telephone
+    required bool estDansMouvement,     // Backend: est_dans_mouvement
+    String? nomMouvement,               // Backend: nom_mouvement
+    required bool estBaptise,           // Backend: est_baptise
+    String? dateBapteme,                // Backend: date_bapteme
+    File? photo,                        // Backend: photo
+  }) async {
+
+    // 1. Vérification auth
+    // Si tu as un token stocké, récupère-le ici
+    final token = await _token; // Assure-toi d'avoir cette méthode ou utilise ta variable _token
+
+    final uri = Uri.parse("$_baseUrl/paroissien/store");
+
+    // 2. Création de la requête Multipart (pour envoyer fichier + texte)
+    var request = http.MultipartRequest('POST', uri);
+
+    // 3. Ajout des Headers
+    request.headers.addAll({
+      'Accept': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    });
+
+    // 4. Ajout des champs Texte (Exactement comme le JSON du backend)
+    request.fields['nom_prenom'] = nomPrenom;
+    request.fields['date_naissance'] = dateNaissance;
+    request.fields['sexe'] = sexe;
+    request.fields['situation_matrimoniale'] = situationMatrimoniale;
+    request.fields['adresse'] = adresse;
+    request.fields['statut_activite'] = statutActivite;
+    request.fields['nom_paroisse'] = nomParoisse;
+    request.fields['telephone'] = telephone;
+
+    // Les booléens doivent souvent être envoyés en "1" ou "0" ou "true"/"false" string via Multipart
+    request.fields['est_dans_mouvement'] = estDansMouvement ? "1" : "0";
+    request.fields['nom_mouvement'] = nomMouvement ?? "";
+
+    request.fields['est_baptise'] = estBaptise ? "1" : "0";
+    if (dateBapteme != null) {
+      request.fields['date_bapteme'] = dateBapteme;
+    }
+
+    // 5. Ajout de la Photo (si elle existe)
+    if (photo != null) {
+      // On devine le type mime ou on laisse le stream faire
+      var stream = http.ByteStream(photo.openRead());
+      var length = await photo.length();
+
+      var multipartFile = http.MultipartFile(
+        'photo', // La clé attendue par le backend
+        stream,
+        length,
+        filename: photo.path.split('/').last,
+      );
+      request.files.add(multipartFile);
+    }
+
+    // 6. Envoi de la requête
+    try {
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+
+      print("Code: ${response.statusCode}");
+      print("Réponse: ${response.body}");
+
+      final data = jsonDecode(response.body);
+
+      // Vérification selon le format du backend ("status": true)
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (data['status'] == true) {
+          return; // Succès
+        } else {
+          throw Exception(data['message'] ?? "Erreur lors de l'enregistrement");
+        }
+      } else {
+        throw Exception(data['message'] ?? "Erreur serveur (${response.statusCode})");
+      }
+    } catch (e) {
+      print("Erreur submitIdentification: $e");
+      rethrow;
+    }
+  }
+
+
 }
 
 
