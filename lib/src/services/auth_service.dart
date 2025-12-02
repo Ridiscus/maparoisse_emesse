@@ -43,6 +43,7 @@ class AuthService extends ChangeNotifier {
   static const String _keyPhone = "phone";
   static const String _keyPhoto = "photo_path";
   static const String _keyCivilite = "civilité";
+  static const String _keyEstBaptise = "est_baptise";
   // Les clés _keyPassword, _keyGoogleId, _keyLoginMethod sont supprimées car gérées par l'API
 
 
@@ -67,9 +68,22 @@ class AuthService extends ChangeNotifier {
   String? get phone => _phone;
   String? get photoPath => _photoPath;
   String? get civilite => _civilite;
+  bool _estBaptise = false;
   // 'get password' est supprimé
 
 
+  // Getter pour savoir si l'utilisateur est baptisé
+  bool get isBaptized => _estBaptise;
+
+
+  // ✅ AJOUTE CE GETTER
+  // Cela permet de savoir facilement si le profil est complet
+  bool get estIdentifie {
+    // Vérifie si les infos cruciales sont présentes
+    // Tu peux ajouter d'autres conditions (ex: _paroisse != null)
+    return _phone != null && _phone!.isNotEmpty &&
+        _fullName != null && _fullName!.isNotEmpty;
+  }
 
   // Headers communs pour les requêtes API
   Map<String, String> get _headers => {
@@ -390,6 +404,32 @@ class AuthService extends ChangeNotifier {
     await prefs.setString(_keyEmail, user['email']);
     await prefs.setString(_keyPhone, user['contact']);
 
+
+
+
+    // 1. On récupère la valeur qui est DÉJÀ stockée dans le téléphone
+    // (Celle enregistrée quand il a rempli sa fiche)
+    bool currentSavedStatus = prefs.getBool(_keyEstBaptise) ?? false;
+    bool finalStatus = currentSavedStatus; // Par défaut, on garde l'ancienne valeur
+
+    // 2. On vérifie si l'API nous envoie une info (Ce qui arrive au Login ou Update, mais PAS au démarrage)
+    if (user.containsKey('est_baptise') && user['est_baptise'] != null) {
+      // L'API contient l'info, donc on met à jour avec la valeur de l'API
+      if (user['est_baptise'] == 1 || user['est_baptise'] == true || user['est_baptise'] == "1") {
+        finalStatus = true;
+      } else {
+        finalStatus = false;
+      }
+    }
+    // SINON : Si 'est_baptise' n'est pas dans le JSON, on garde 'finalStatus = currentSavedStatus'
+
+    // 3. On sauvegarde la valeur finale (Ancienne ou Nouvelle)
+    await prefs.setBool(_keyEstBaptise, finalStatus);
+    _estBaptise = finalStatus;
+
+    // ---------------------------------------
+
+
     // --- CORRECTION URL IMAGE ---
     String? finalPhotoUrl;
     if (user['profile_picture'] != null && (user['profile_picture'] as String).isNotEmpty) {
@@ -437,6 +477,7 @@ class AuthService extends ChangeNotifier {
     _phone = user['contact'];
     _photoPath = finalPhotoUrl; // Utilise l'URL corrigée
     _civilite = prefs.getString(_keyCivilite);
+    _estBaptise = finalStatus;
 
     notifyListeners();
   }
@@ -1822,7 +1863,13 @@ class AuthService extends ChangeNotifier {
       // Vérification selon le format du backend ("status": true)
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (data['status'] == true) {
-          return; // Succès
+
+          // On utilise les données confirmées par le serveur (data['data'])
+          if (data['data'] != null) {
+            await _updateLocalUserData(data['data']);
+          } // ⚠️ TRES IMPORTANT : Dit à l'écran de se rafraîchir
+          return;
+
         } else {
           throw Exception(data['message'] ?? "Erreur lors de l'enregistrement");
         }
@@ -1834,6 +1881,175 @@ class AuthService extends ChangeNotifier {
       rethrow;
     }
   }
+
+
+
+
+
+
+  // --- NOUVEAU : Récupérer les détails du paroissien (GET) ---
+  Future<Map<String, dynamic>?> getParoissien(int id) async {
+    // Vérification auth
+    final token = _token;
+    if (token == null) return null;
+
+    final url = Uri.parse("$_baseUrl/paroissien/$id");
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data['status'] == true) {
+        final userData = data['data'];
+
+        // ✅ IMPORTANT : On met à jour les variables locales pour l'affichage Accueil
+        _updateLocalUserData(userData);
+
+        return userData; // On retourne les données pour remplir le formulaire
+      } else {
+        print("Erreur getParoissien: ${data['message']}");
+        return null;
+      }
+    } catch (e) {
+      print("Erreur réseau getParoissien: $e");
+      rethrow;
+    }
+  }
+
+
+
+
+  // --- MISE À JOUR (VERSION UNIFIÉE : TOUJOURS MULTIPART) ---
+  Future<void> updateParoissien({
+    required int id,
+    required String nomPrenom,
+    required String dateNaissance,
+    required String sexe,
+    required String situationMatrimoniale,
+    required String adresse,
+    required String statutActivite,
+    required String nomParoisse,
+    required String telephone,
+    required bool estDansMouvement,
+    String? nomMouvement,
+    required bool estBaptise,
+    String? dateBapteme,
+    File? photo,
+  }) async {
+    final token = _token;
+    final uri = Uri.parse("$_baseUrl/paroissien/$id");
+
+    // ON UTILISE TOUJOURS MULTIPART REQUEST (Même sans photo)
+    // C'est le seul moyen sûr que le backend PHP comprenne les champs texte ET fichier
+    var request = http.MultipartRequest('POST', uri);
+
+    request.headers.addAll({
+      'Accept': 'application/json',
+      'Authorization': 'Bearer $token',
+    });
+
+    // ⚠️ IMPORTANT : ON N'AJOUTE PAS DE CHAMP '_method'
+    // Car ton erreur précédente (405) a prouvé que la route est bien en POST natif.
+
+    // Ajout des champs Texte
+    request.fields['nom_prenom'] = nomPrenom;
+    request.fields['date_naissance'] = dateNaissance;
+    request.fields['sexe'] = sexe;
+    request.fields['situation_matrimoniale'] = situationMatrimoniale;
+    request.fields['adresse'] = adresse;
+    request.fields['statut_activite'] = statutActivite;
+    request.fields['nom_paroisse'] = nomParoisse;
+    request.fields['telephone'] = telephone;
+
+    // Booléens convertis en "1" ou "0"
+    request.fields['est_dans_mouvement'] = estDansMouvement ? "1" : "0";
+    request.fields['nom_mouvement'] = nomMouvement ?? "";
+    request.fields['est_baptise'] = estBaptise ? "1" : "0";
+
+    if (dateBapteme != null) {
+      request.fields['date_bapteme'] = dateBapteme;
+    }
+
+    // Ajout de la photo (Seulement si on en a une nouvelle)
+    if (photo != null) {
+      var stream = http.ByteStream(photo.openRead());
+      var length = await photo.length();
+      var multipartFile = http.MultipartFile(
+        'photo',
+        stream,
+        length,
+        filename: photo.path.split('/').last,
+      );
+      request.files.add(multipartFile);
+    }
+
+    try {
+      print("Envoi Update vers : $uri");
+
+      var streamedResponse = await request.send();
+      var response = await http.Response.fromStream(streamedResponse);
+
+      print("Code Update: ${response.statusCode}");
+      print("Réponse Update: ${response.body}");
+
+      final data = jsonDecode(response.body);
+
+      // On accepte 200 ou 201
+      if ((response.statusCode == 200 || response.statusCode == 201) && data['status'] == true) {
+
+        // Mise à jour locale des données
+        if (data['data'] != null) {
+          await _updateLocalUserData(data['data']);
+        }
+        return;
+
+      } else {
+        // Si c'est encore "Action non autorisée", le problème vient peut-être de l'ID
+        throw Exception(data['message'] ?? "Erreur lors de la mise à jour (${response.statusCode})");
+      }
+
+    } catch (e) {
+      print("Erreur updateParoissien: $e");
+      rethrow;
+    }
+  }
+
+
+
+  // --- HELPER PRIVÉ : Met à jour les variables locales et SharedPreferences ---
+  Future<void> _updateLocalUserData(Map<String, dynamic> data) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // 1. Mise à jour variables mémoire
+    if (data['nom_prenom'] != null) _fullName = data['nom_prenom'];
+    if (data['telephone'] != null) _phone = data['telephone'];
+
+    // Gestion robuste du booléen est_baptise (API peut renvoyer 1, "1", true)
+    if (data['est_baptise'] != null) {
+      _estBaptise = data['est_baptise'] == 1 || data['est_baptise'] == true || data['est_baptise'] == "1";
+    }
+
+    // 2. Mise à jour SharedPreferences (Disque)
+    if (_fullName != null) await prefs.setString(_keyFullName, _fullName!);
+    if (_phone != null) await prefs.setString(_keyPhone, _phone!);
+    await prefs.setBool(_keyEstBaptise, _estBaptise);
+
+    // 3. Notifier les écrans (Home, Profil...)
+    notifyListeners();
+  }
+
+
+
+
+
+
 
 
 }

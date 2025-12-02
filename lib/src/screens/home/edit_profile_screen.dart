@@ -217,6 +217,36 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           ? Icon(Icons.person, size: 60, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),)
                           : null,
                     ),
+
+
+                    // ✅ 1. L'ÉTIQUETTE BAPTISÉ (En haut à gauche)
+                    // On utilise Provider pour vérifier l'état
+                    if (Provider.of<AuthService>(context).isBaptized)
+                      Positioned(
+                        top: 0,
+                        left: -10, // Décalé un peu à gauche pour le style
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                              color: Colors.blueAccent,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.white, width: 2),
+                              boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0,2))]
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.water_drop_rounded, color: Colors.white, size: 12),
+                              SizedBox(width: 4),
+                              Text(
+                                "BAPTISÉ",
+                                style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
                     Positioned(
                       bottom: 0,
                       right: -10, // Ajuste pour positionner l'icône

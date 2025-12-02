@@ -51,15 +51,23 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
   List<dynamic> _parishes = []; // To store loaded parishes
 
   bool _isLoading = false;
+  int? _existingParoissienId;
 
 
 
   @override
   void initState() {
     super.initState();
-    _loadParishes();
-    _prefillUserData(); // <--- On charge les données utilisateur au démarrage
+    _prefillUserData(); // Remplit juste Nom/Tel/Photo (local)
+    _loadParishes();    // Charge la liste des paroisses
+
+    // ✅ NOUVEAU : On va chercher les détails complets sur le serveur
+    // On met un petit délai pour être sûr que l'AuthService est prêt
+    Future.delayed(Duration.zero, () {
+      _fetchAndFillData();
+    });
   }
+
 
   // --- 1. FONCTION POUR PRÉ-REMPLIR LES DONNÉES ---
   void _prefillUserData() {
@@ -73,6 +81,117 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
     if (auth.photoPath != null && auth.photoPath!.isNotEmpty) {
       _initialPhotoUrl = auth.photoPath;
     }
+  }
+
+
+
+
+
+
+  Future<void> _fetchAndFillData() async {
+    setState(() => _isLoading = true);
+
+    try {
+      final auth = Provider.of<AuthService>(context, listen: false);
+      if (auth.id == null) return;
+
+      if (_parishes.isEmpty) {
+        await _loadParishes();
+      }
+
+      final data = await auth.getParoissien(auth.id!);
+
+      if (data != null && mounted) {
+
+        // --- 🕵️‍♂️ DEBUG : REGARDE ÇA DANS TA CONSOLE ---
+        print("--- DEBUG DATA ---");
+        print("Mouvement (Brut): ${data['est_dans_mouvement']} (Type: ${data['est_dans_mouvement'].runtimeType})");
+        print("Baptisé (Brut): ${data['est_baptise']} (Type: ${data['est_baptise'].runtimeType})");
+        print("------------------");
+        // ----------------------------------------------
+
+        setState(() {
+          _existingParoissienId = data['id'];
+
+          // Champs Texte
+          if (data['nom_prenom'] != null) _nomPrenomsCtrl.text = data['nom_prenom'];
+          if (data['adresse'] != null) _lieuHabitationCtrl.text = data['adresse'];
+          if (data['telephone'] != null) _telephoneCtrl.text = data['telephone'];
+          if (data['nom_mouvement'] != null) _mouvementCtrl.text = data['nom_mouvement'];
+
+
+
+          // Sexe
+          if (data['sexe'] != null) {
+            String val = data['sexe'].toString().trim();
+            if (val == 'M') _sexe = 'Masculin';
+            else if (val == 'F') _sexe = 'Féminin';
+            else if (_sexes.contains(val)) _sexe = val;
+          }
+
+          // Dropdowns
+          if (data['situation_matrimoniale'] != null && _situations.contains(data['situation_matrimoniale'])) {
+            _situationMatrimoniale = data['situation_matrimoniale'];
+          }
+          if (data['statut_activite'] != null && _activites.contains(data['statut_activite'])) {
+            _statutActivite = data['statut_activite'];
+          }
+
+          // ✅ SWITCHES : On utilise la version SUPER ROBUSTE
+          _isInMovement = _parseBool(data['est_dans_mouvement']);
+          _isBaptise = _parseBool(data['est_baptise']);
+
+          // Dates
+          if (data['date_naissance'] != null) {
+            _dateNaissance = DateTime.tryParse(data['date_naissance']);
+          }
+          if (data['date_bapteme'] != null) {
+            _dateBapteme = DateTime.tryParse(data['date_bapteme']);
+          }
+
+          // Paroisse
+          if (data['nom_paroisse'] != null && _parishes.isNotEmpty) {
+            String apiParishName = data['nom_paroisse'].toString().trim().toLowerCase();
+            try {
+              final parishObj = _parishes.firstWhere(
+                    (p) => p['name'].toString().trim().toLowerCase() == apiParishName,
+              );
+              _selectedParoisseId = parishObj['id'];
+            } catch (e) {
+              print("Paroisse non trouvée pour : $apiParishName");
+            }
+          }
+        });
+      }
+    } catch (e) {
+      print("Erreur chargement: $e");
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+
+
+
+
+
+  // Fonction ultra-robuste pour convertir n'importe quoi en VRAI/FAUX
+  bool _parseBool(dynamic value) {
+    if (value == null) return false;
+
+    // Cas booléen direct
+    if (value is bool) return value;
+
+    // Cas entier (1 = vrai, 0 = faux)
+    if (value is int) return value == 1;
+
+    // Cas String
+    if (value is String) {
+      String lower = value.toLowerCase().trim();
+      return lower == "1" || lower == "true" || lower == "yes" || lower == "on";
+    }
+
+    return false;
   }
 
 
@@ -141,6 +260,114 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
 
 
 
+  Future<void> _submitForm() async {
+    if (_formKey.currentState!.validate()) {
+      // Validations manuelles (Dates, Dropdowns...)
+      if (_dateNaissance == null) {
+        _showSnack("Veuillez choisir votre date de naissance", isError: true);
+        return;
+      }
+      if (_sexe == null || _situationMatrimoniale == null || _statutActivite == null || _selectedParoisseId == null) {
+        _showSnack("Veuillez remplir tous les champs de sélection", isError: true);
+        return;
+      }
+      if (_isBaptise && _dateBapteme == null) {
+        _showSnack("Veuillez indiquer la date de baptême", isError: true);
+        return;
+      }
+
+      setState(() => _isLoading = true);
+
+      try {
+        final authService = Provider.of<AuthService>(context, listen: false);
+
+        // 1. Récupération du NOM de la paroisse
+        final selectedParishObj = _parishes.firstWhere(
+                (p) => p['id'] == _selectedParoisseId,
+            orElse: () => null
+        );
+        final String nomParoisseToSend = selectedParishObj != null ? selectedParishObj['name'] : "";
+
+        // 2. Conversion du Sexe
+        String sexeToSend = _sexe == 'Masculin' ? 'M' : 'F';
+
+        // 3. Formatage des dates
+        final String dateNaissFormatted = DateFormat('yyyy-MM-dd').format(_dateNaissance!);
+        final String? dateBaptemeFormatted = (_isBaptise && _dateBapteme != null)
+            ? DateFormat('yyyy-MM-dd').format(_dateBapteme!)
+            : null;
+
+        // ✅ 4. LE CHOIX CRUCIAL : UPDATE OU CREATE ?
+        if (_existingParoissienId != null) {
+
+          print("⚠️ TENTATIVE UPDATE");
+          print("ID Paroissien à modifier : $_existingParoissienId");
+          print("User ID connecté (AuthService) : ${authService.id}");
+
+
+    // CAS A : UPDATE (On a déjà un ID, donc on modifie)
+          final auth = Provider.of<AuthService>(context, listen: false);
+          await authService.updateParoissien(
+            id: auth.id!, // On passe l'ID récupéré
+            nomPrenom: _nomPrenomsCtrl.text,
+            dateNaissance: dateNaissFormatted,
+            sexe: sexeToSend,
+            situationMatrimoniale: _situationMatrimoniale!,
+            adresse: _lieuHabitationCtrl.text,
+            statutActivite: _statutActivite!,
+            nomParoisse: nomParoisseToSend,
+            telephone: _telephoneCtrl.text,
+            estDansMouvement: _isInMovement,
+            nomMouvement: _mouvementCtrl.text,
+            estBaptise: _isBaptise,
+            dateBapteme: dateBaptemeFormatted,
+            photo: _imageFile, // Optionnel
+          );
+
+          if (mounted) _showSnack("Fiche mise à jour avec succès !");
+
+        } else {
+
+          // CAS B : CREATE (Première fois, pas d'ID)
+          await authService.submitIdentification(
+            nomPrenom: _nomPrenomsCtrl.text,
+            dateNaissance: dateNaissFormatted,
+            sexe: sexeToSend,
+            situationMatrimoniale: _situationMatrimoniale!,
+            adresse: _lieuHabitationCtrl.text,
+            statutActivite: _statutActivite!,
+            nomParoisse: nomParoisseToSend,
+            telephone: _telephoneCtrl.text,
+            estDansMouvement: _isInMovement,
+            nomMouvement: _mouvementCtrl.text,
+            estBaptise: _isBaptise,
+            dateBapteme: dateBaptemeFormatted,
+            photo: _imageFile,
+          );
+
+          if (mounted) _showSnack("Fidèle enregistré avec succès !");
+        }
+
+        if (mounted) {
+          // On attend un petit peu pour que l'utilisateur lise le message
+          await Future.delayed(const Duration(seconds: 1));
+          Navigator.pop(context);
+        }
+
+      } catch (e) {
+        if (mounted) {
+          _showSnack("Erreur: ${e.toString().replaceAll('Exception:', '')}", isError: true);
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
+    }
+  }
+
+
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context); // Gestion de l'affichage de l'image (Fichier local OU Réseau OU Défaut)
@@ -178,6 +405,35 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
                           ? const Icon(Icons.person, size: 50, color: Colors.grey)
                           : null,
                     ),
+
+                    // ✅ 1. L'ÉTIQUETTE BAPTISÉ
+                    // On vérifie si l'info est DÉJÀ enregistrée dans AuthService
+                    if (Provider.of<AuthService>(context).isBaptized)
+                      Positioned(
+                        top: -5,
+                        left: -5,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                              color: Colors.blueAccent,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.white, width: 2),
+                              boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)]
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.water_drop_rounded, color: Colors.white, size: 10),
+                              SizedBox(width: 4),
+                              Text(
+                                "BAPTISÉ",
+                                style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
                     Positioned(
                       bottom: 0,
                       right: 0,
@@ -296,8 +552,6 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
 
 
 
-
-
   // Helper widgets for cleaner code
   Widget _buildTextField(String label, TextEditingController controller, {TextInputType? keyboardType}) {
     return TextFormField(
@@ -347,87 +601,6 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
     );
   }
 
-
-
-
-
-  Future<void> _submitForm() async {
-    if (_formKey.currentState!.validate()) {
-      // Validations manuelles
-      if (_dateNaissance == null) {
-        _showSnack("Veuillez choisir votre date de naissance", isError: true);
-        return;
-      }
-      if (_sexe == null || _situationMatrimoniale == null || _statutActivite == null || _selectedParoisseId == null) {
-        _showSnack("Veuillez remplir tous les champs de sélection", isError: true);
-        return;
-      }
-      if (_isBaptise && _dateBapteme == null) {
-        _showSnack("Veuillez indiquer la date de baptême", isError: true);
-        return;
-      }
-
-      setState(() => _isLoading = true);
-
-      try {
-        final authService = Provider.of<AuthService>(context, listen: false);
-
-        // --- 1. Récupération du NOM de la paroisse à partir de l'ID ---
-        // On cherche dans la liste _parishes l'élément qui a l'ID sélectionné
-        final selectedParishObj = _parishes.firstWhere(
-                (p) => p['id'] == _selectedParoisseId,
-            orElse: () => null
-        );
-        final String nomParoisseToSend = selectedParishObj != null ? selectedParishObj['name'] : "";
-        // -------------------------------------------------------------
-
-
-        // --- CORRECTION ICI : Conversion du Sexe ---
-        // Le Backend veut "M" ou "F", pas "Masculin" ou "Féminin"
-        String sexeToSend = _sexe == 'Masculin' ? 'M' : 'F';
-        // -------------------------------------------
-
-
-        // Formatage des dates (YYYY-MM-DD)
-        final String dateNaissFormatted = DateFormat('yyyy-MM-dd').format(_dateNaissance!);
-
-        final String? dateBaptemeFormatted = (_isBaptise && _dateBapteme != null)
-            ? DateFormat('yyyy-MM-dd').format(_dateBapteme!)
-            : null;
-
-        // Appel de la fonction corrigée
-        await authService.submitIdentification(
-          nomPrenom: _nomPrenomsCtrl.text,
-          dateNaissance: dateNaissFormatted,
-          sexe: sexeToSend,
-          situationMatrimoniale: _situationMatrimoniale!,
-          adresse: _lieuHabitationCtrl.text, // Mappé vers 'adresse'
-          statutActivite: _statutActivite!,
-          nomParoisse: nomParoisseToSend,    // On envoie le NOM, pas l'ID
-          telephone: _telephoneCtrl.text,
-          estDansMouvement: _isInMovement,
-          nomMouvement: _mouvementCtrl.text,
-          estBaptise: _isBaptise,
-          dateBapteme: dateBaptemeFormatted,
-          photo: _imageFile, // On envoie le fichier image
-        );
-
-        if (mounted) {
-          _showSnack("Fidèle enregistré avec succès !");
-          Navigator.pop(context);
-        }
-
-      } catch (e) {
-        if (mounted) {
-          _showSnack("Erreur: ${e.toString().replaceAll('Exception:', '')}", isError: true);
-        }
-      } finally {
-        if (mounted) {
-          setState(() => _isLoading = false);
-        }
-      }
-    }
-  }
 
 
 

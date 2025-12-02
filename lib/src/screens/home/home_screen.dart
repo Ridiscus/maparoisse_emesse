@@ -394,61 +394,139 @@ class _HomeScreenState extends State<HomeScreen> {
 
 
 
-  // --- NEW WIDGET: Identification Card Button ---
+
+
   Widget _buildIdentificationCard(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    return InkWell(
-      onTap: () {
-        // Navigate to the Identification Screen (Create this screen next)
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const IdentificationScreen()),
-        );
-      },
-      borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardTheme.color, // Use theme card color
+    // 1. Récupérer l'état du profil via le Provider
+    final authService = Provider.of<AuthService>(context);
+
+    // LOGIQUE : Comment savoir si c'est rempli ?
+    // Idéalement, ton User doit avoir un champ booléen ou on vérifie si un champ clé est vide.
+    // Exemple : Si le téléphone ou la date de naissance est null, c'est pas rempli.
+    // Tu devras adapter cette condition selon ton modèle User.
+    bool isProfileComplete = authService.estIdentifie;
+    // Ou authService.user?.estIdentifie == true;
+
+    final theme = Theme.of(context);
+
+    // Configuration du style selon l'état
+    final badgeColor = isProfileComplete ? AppTheme.successColor : AppTheme.errorColor; // Vert ou Rouge
+    final badgeText = isProfileComplete ? "Complet" : "À remplir";
+    final badgeIcon = isProfileComplete ? Icons.check_circle : Icons.info;
+
+    return Stack(
+      children: [
+        // --- LA CARTE PRINCIPALE (Légèrement modifiée pour laisser de la place au badge) ---
+        InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const IdentificationScreen()),
+            );
+          },
           borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-          boxShadow: AppTheme.cardShadow,
-          border: Border.all(color: const Color(0xFFC0A040).withOpacity(0.3)), // Optional: Golden border
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFC0A040).withOpacity(0.1), // Light gold background
-                shape: BoxShape.circle,
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: theme.cardTheme.color,
+              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+              boxShadow: AppTheme.cardShadow,
+              // Bordure dorée si complet, rouge si incomplet (Optionnel, pour insister)
+              border: Border.all(
+                color: isProfileComplete
+                    ? const Color(0xFFC0A040).withOpacity(0.3)
+                    : AppTheme.errorColor.withOpacity(0.3),
               ),
-              child: const Icon(Icons.person_pin_rounded, color: Color(0xFFC0A040), size: 28),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Fiche d'identification", // Replace with l10n.identificationSheetTitle
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "Remplissez votre profil paroissial", // Replace with l10n.identificationSheetSubtitle
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                    ),
+            child: Row(
+              children: [
+                // Icône à gauche
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFC0A040).withOpacity(0.1),
+                    shape: BoxShape.circle,
                   ),
-                ],
-              ),
+                  child: const Icon(Icons.person_pin_rounded, color: Color(0xFFC0A040), size: 28),
+                ),
+                const SizedBox(width: 16),
+
+                // Textes
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Fiche d'identification",
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        isProfileComplete
+                            ? "Vos informations sont à jour."
+                            : "Action requise : Complétez votre profil.", // Texte incitatif
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: isProfileComplete
+                              ? theme.colorScheme.onSurface.withOpacity(0.6)
+                              : AppTheme.errorColor, // Texte rouge si urgent
+                          fontWeight: isProfileComplete ? FontWeight.normal : FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Petite flèche (on la garde, mais on peut la cacher si besoin)
+                const SizedBox(width: 8),
+                const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+              ],
             ),
-            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-          ],
+          ),
         ),
-      ),
+
+// --- L'ÉTIQUETTE STYLÉE (BADGE) ---
+        Positioned(
+          top: 0,
+          right: 0,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: badgeColor,
+              // On arrondit seulement le coin en bas à gauche pour faire un effet "coin plié"
+              borderRadius: const BorderRadius.only(
+                topRight: Radius.circular(AppTheme.radiusMedium), // Suit la carte
+                bottomLeft: Radius.circular(12),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: badgeColor.withOpacity(0.4),
+                  blurRadius: 4,
+                  offset: const Offset(-2, 2),
+                )
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(badgeIcon, color: Colors.white, size: 12),
+                const SizedBox(width: 6),
+                Text(
+                  badgeText.toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
