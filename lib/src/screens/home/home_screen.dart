@@ -785,45 +785,93 @@ Widget _buildStatusSection(BuildContext context) {
 
 
 
-/// NOUVEAU : Ouvre le modal avec la liste filtrée
-void _showStatusModal(String title, bool Function(Map<String, dynamic>) filter) {
-  // Applique le filtre sur la liste complète des demandes
-  final List<Map<String, dynamic>> filteredList = _allMassRequests
-      .where((r) => filter(r as Map<String, dynamic>))
-      .cast<Map<String, dynamic>>()
-      .toList();
 
-  // Trie la liste filtrée par date (la plus récente en premier)
-  filteredList.sort((a, b) =>
-      _parseDateRobust(b['created_at'])
-          .compareTo(_parseDateRobust(a['created_at'])));
+  void _showStatusModal(String title, bool Function(Map<String, dynamic>) filter) {
+    // 1. Filtrage et Tri (Inchangé)
+    final List<Map<String, dynamic>> filteredList = _allMassRequests
+        .where((r) => filter(r as Map<String, dynamic>))
+        .cast<Map<String, dynamic>>()
+        .toList();
 
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true, // Permet au modal de prendre plus de hauteur
-    backgroundColor: Colors.transparent,
-    builder: (context) {
-      return _StatusListModal(
-        title: title,
-        requests: filteredList,
-        // Passe les helpers nécessaires au modal
-        findParishName: _findParishName,
-        formatDateTime: (date, time) {
-          try {
-            final dateTime = DateTime.parse('$date $time');
-            return DateFormat('dd/MM/yyyy / HH:mm', 'fr_FR').format(dateTime);
-          } catch (e) {
-            return date;
-          }
-        },
-        buildStatusBadge: (status) {
-          // Badge simplifié
-          return _buildStatusBadge(status, null);
-        },
-      );
-    },
-  );
-}
+    filteredList.sort((a, b) =>
+        _parseDateRobust(b['created_at'])
+            .compareTo(_parseDateRobust(a['created_at'])));
+
+    // 2. Affichage du Modal Flottant
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent, // ✅ CRUCIAL : Fond invisible
+      // transitionAnimationController: ... (Si tu veux contrôler la vitesse, optionnel)
+      builder: (context) {
+
+        // ✅ MAGIE : On enveloppe le tout dans un Padding pour le décoller
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 13,
+            right: 13,
+            // On ajoute la marge système (barre du bas iPhone) + 20px pour l'effet flottant
+            bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom + 20,
+            top: 60, // Marge en haut pour ne pas coller tout en haut si la liste est longue
+          ),
+          child: Container(
+            // ✅ DECORATION : On donne l'aspect "Carte" ici
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor, // ou cardTheme.color
+              borderRadius: BorderRadius.circular(24), // Coins très arrondis (Google Style)
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 15,
+                  spreadRadius: 2,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            // Clip pour que le contenu (la liste) respecte les coins arrondis
+            clipBehavior: Clip.antiAlias,
+
+            // On appelle ton widget de contenu
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // S'adapte à la hauteur du contenu
+              children: [
+                // Petit indicateur (Handle) visuel en haut pour dire "on peut glisser"
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(top: 12, bottom: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+
+                // Ton widget existant (il faudra peut-être enlever le Container décoratif à l'intérieur s'il en a déjà un)
+                Flexible(
+                  child: _StatusListModal(
+                    title: title,
+                    requests: filteredList,
+                    findParishName: _findParishName,
+                    formatDateTime: (date, time) {
+                      try {
+                        final dateTime = DateTime.parse('$date $time');
+                        return DateFormat('dd/MM/yyyy / HH:mm', 'fr_FR').format(dateTime);
+                      } catch (e) {
+                        return date;
+                      }
+                    },
+                    buildStatusBadge: (status) => _buildStatusBadge(status, null),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
 
 

@@ -264,21 +264,63 @@ class _RequestsListScreenState extends State<RequestsListScreen> with TickerProv
 
 
 
-  /// NOUVEAU : Affiche le modal de détails
-  /// MODIFIÉ : _showRequestDetails
-  void _showRequestDetails(Map<String, dynamic> request) {
 
-    // --- AJOUTE CETTE LIGNE DE DÉBOGAGE ---
+
+
+  void _showRequestDetails(Map<String, dynamic> request) {
     print("Données envoyées au modal: $request");
-    // --- FIN AJOUT ---
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: Colors.transparent, // Fond invisible pour voir derrière
       builder: (context) {
-        // On n'a plus besoin de passer parishName séparément
-        return RequestDetailModal(request: request);
+        return Padding(
+          // On décolle le modal des bords (Gauche/Droite/Bas)
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            // On gère la barre système du bas + une petite marge de 20px
+            bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom + 20,
+            top: 60, // Marge de sécurité en haut
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor, // Fond du modal
+              borderRadius: BorderRadius.circular(24), // Coins bien ronds partout
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias, // Force le contenu à respecter les coins ronds
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // S'adapte à la hauteur du contenu
+              children: [
+                // Petit indicateur (Handle) en haut
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(top: 12, bottom: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+
+                // Le contenu de ton modal
+                Flexible(
+                  child: RequestDetailModal(request: request),
+                ),
+              ],
+            ),
+          ),
+        );
       },
     );
   }

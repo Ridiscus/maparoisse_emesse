@@ -191,16 +191,60 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
 
 
 
+
+
   void _showEventDetails(int eventId) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
-        // La modale charge ses propres détails
-        return _EventDetailModal(
-          eventId: eventId,
-          authService: _authService,
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 10,
+            right: 10,
+            bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).padding.bottom + 20,
+            top: 60,
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Petit indicateur (Handle)
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(top: 12, bottom: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.withOpacity(0.4),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+
+                // Le contenu du détail événement
+                Flexible(
+                  child: _EventDetailModal(
+                    eventId: eventId,
+                    authService: _authService, // Assure-toi que _authService est accessible ici
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
       },
     );

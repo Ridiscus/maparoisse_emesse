@@ -184,8 +184,6 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
 
 
 
-
-
   // Fonction ultra-robuste pour convertir n'importe quoi en VRAI/FAUX
   bool _parseBool(dynamic value) {
     if (value == null) return false;
@@ -332,6 +330,7 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
             nomMouvement: _mouvementCtrl.text,
             estBaptise: _isBaptise,
             dateBapteme: dateBaptemeFormatted,
+            nomParoisseBapteme: _isBaptise ? _paroisseBaptemeCtrl.text : "",
             photo: _imageFile, // Optionnel
           );
 
