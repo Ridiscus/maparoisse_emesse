@@ -893,7 +893,6 @@ class AuthService extends ChangeNotifier {
 
 
 
-  // DANS LA CLASSE AuthService (fichier auth_service.dart)
 
   /// MODIFIÉ : Crée une demande de messe (renvoie l'objet 'messe')
   Future<Map<String, dynamic>> createMassRequest({
@@ -1798,6 +1797,7 @@ class AuthService extends ChangeNotifier {
     String? nomMouvement,               // Backend: nom_mouvement
     required bool estBaptise,           // Backend: est_baptise
     String? dateBapteme,                // Backend: date_bapteme
+    String? nomParoisseBapteme,
     File? photo,                        // Backend: photo
   }) async {
 
@@ -1834,6 +1834,10 @@ class AuthService extends ChangeNotifier {
     if (dateBapteme != null) {
       request.fields['date_bapteme'] = dateBapteme;
     }
+
+
+    request.fields['nom_paroisse_bapteme'] = nomParoisseBapteme ?? "";
+
 
     // 5. Ajout de la Photo (si elle existe)
     if (photo != null) {
@@ -1941,6 +1945,7 @@ class AuthService extends ChangeNotifier {
     String? nomMouvement,
     required bool estBaptise,
     String? dateBapteme,
+    String? nomParoisseBapteme,
     File? photo,
   }) async {
     final token = _token;
@@ -1976,6 +1981,10 @@ class AuthService extends ChangeNotifier {
     if (dateBapteme != null) {
       request.fields['date_bapteme'] = dateBapteme;
     }
+
+
+    // ✅ 2. AJOUT DU CHAMP DANS LA REQUÊTE
+    request.fields['nom_paroisse_bapteme'] = nomParoisseBapteme ?? "";
 
     // Ajout de la photo (Seulement si on en a une nouvelle)
     if (photo != null) {

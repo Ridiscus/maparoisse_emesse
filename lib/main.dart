@@ -1,5 +1,5 @@
 
-
+import 'package:flutter/services.dart'; // N'oublie pas cet import
 
 import 'package:flutter/material.dart';
 import 'src/app.dart';
@@ -42,6 +42,23 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('fr_FR', null);
+
+
+
+  // --- NOUVEAU : ACTIVATION DU EDGE-TO-EDGE ---
+  // 1. On active le mode plein écran total
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
+  // 2. On définit les barres comme transparentes
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent, // Haut transparent
+    systemNavigationBarColor: Colors.transparent, // Bas transparent
+    // Icônes sombres ou claires selon ton thème (ici sombres pour fond clair)
+    statusBarIconBrightness: Brightness.dark,
+    systemNavigationBarIconBrightness: Brightness.dark,
+  ));
+  // --------------------------------------------
+
 
   // 1. Initialise Firebase
   await Firebase.initializeApp(

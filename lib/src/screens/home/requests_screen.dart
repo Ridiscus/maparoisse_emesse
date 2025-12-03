@@ -414,9 +414,6 @@ class _RequestsScreenState extends State<RequestsScreen>
 
 
 
-
-
-
   /// NOUVEAU : Réinitialise le formulaire à son état initial
   void _resetForm() {
     setState(() {
@@ -1097,16 +1094,23 @@ class _RequestsScreenState extends State<RequestsScreen>
                       firstDate: DateTime.now().add(const Duration(days: 1)),
                       lastDate: DateTime.now().add(const Duration(days: 365)),
 
-                      // ✅ C'EST ICI QU'ON COLLE LE BUILDER POUR LE MODE SOMBRE
+                      // ✅ BUILDER MODIFIÉ POUR LE CURSEUR NOIR
                       builder: (context, child) {
                         return Theme(
                           data: Theme.of(context).copyWith(
                             colorScheme: Theme.of(context).colorScheme.copyWith(
-                              primary: AppTheme.primaryColor, // Couleur de sélection (rond)
-                              onPrimary: Colors.white, // Texte dans le rond sélectionné
-                              onSurface: Theme.of(context).colorScheme.onSurface, // Texte des jours (Noir ou Blanc)
+                              primary: AppTheme.primaryColor,
+                              onPrimary: Colors.white,
+                              onSurface: Theme.of(context).colorScheme.onSurface,
                             ),
-                            dialogBackgroundColor: Theme.of(context).cardTheme.color, // Fond du calendrier
+                            dialogBackgroundColor: Theme.of(context).cardTheme.color,
+
+                            // 👇 C'EST ICI LA CORRECTION
+                            textSelectionTheme: const TextSelectionThemeData(
+                              cursorColor: Colors.black, // La barre clignotante en Noir
+                              selectionHandleColor: Colors.black, // La goutte d'eau en Noir
+                              selectionColor: Color(0xFFCCCCCC), // La couleur de surbrillance (gris clair)
+                            ),
                           ),
                           child: child!,
                         );
@@ -1135,6 +1139,7 @@ class _RequestsScreenState extends State<RequestsScreen>
                       context: context,
                       initialTime: TimeOfDay.now(),
                       // ✅ AJOUTE LE MÊME BUILDER ICI AUSSI
+                      // ✅ BUILDER MODIFIÉ
                       builder: (context, child) {
                         return Theme(
                           data: Theme.of(context).copyWith(
@@ -1142,9 +1147,16 @@ class _RequestsScreenState extends State<RequestsScreen>
                               primary: AppTheme.primaryColor,
                               onPrimary: Colors.white,
                               onSurface: Theme.of(context).colorScheme.onSurface,
-                              surface: Theme.of(context).cardTheme.color, // Fond du cadran
+                              surface: Theme.of(context).cardTheme.color,
                             ),
                             dialogBackgroundColor: Theme.of(context).cardTheme.color,
+
+                            // 👇 C'EST ICI LA CORRECTION
+                            textSelectionTheme: const TextSelectionThemeData(
+                              cursorColor: Colors.black, // Curseur Noir
+                              selectionHandleColor: Colors.black, // Poignée Noire
+                              selectionColor: Color(0xFFCCCCCC), // Surbrillance grise
+                            ),
                           ),
                           child: child!,
                         );

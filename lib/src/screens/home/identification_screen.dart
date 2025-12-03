@@ -28,6 +28,10 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
   final _lieuHabitationCtrl = TextEditingController();
   final _telephoneCtrl = TextEditingController();
 
+
+  final  _paroisseBaptemeCtrl = TextEditingController();
+
+
   // State variables for dropdowns and pickers
   DateTime? _dateNaissance;
   DateTime? _dateBapteme;
@@ -38,6 +42,7 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
   bool _isInMovement = false;
   bool _isBaptise = false;
   final _mouvementCtrl = TextEditingController(); // To specify movement if 'Yes'
+
 
   // --- NOUVEAU : Gestion Image ---
   File? _imageFile; // Nouvelle image sélectionnée
@@ -118,6 +123,12 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
           if (data['adresse'] != null) _lieuHabitationCtrl.text = data['adresse'];
           if (data['telephone'] != null) _telephoneCtrl.text = data['telephone'];
           if (data['nom_mouvement'] != null) _mouvementCtrl.text = data['nom_mouvement'];
+          if (data['nom_mouvement'] != null) _mouvementCtrl.text = data['nom_mouvement'];
+
+          // ✅ REMPLISSAGE DU NOUVEAU CHAMP
+          if (data['nom_paroisse_bapteme'] != null) {
+            _paroisseBaptemeCtrl.text = data['nom_paroisse_bapteme'];
+          }
 
 
 
@@ -516,12 +527,19 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
                 onChanged: (val) => setState(() => _isBaptise = val),
               ),
 
-              // On affiche le sélecteur de date SEULEMENT si baptisé est cochée
-              if (_isBaptise)
+              // On affiche les champs SEULEMENT si baptisé est coché
+              if (_isBaptise) ...[ // Utilise ...[ ] pour grouper plusieurs widgets
                 Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: _buildDateSelector("Date de Baptême", _dateBapteme, false),
                 ),
+
+                // ✅ NOUVEAU CHAMP : Paroisse de baptême
+                Padding(
+                  padding: const EdgeInsets.only(top: 16.0),
+                  child: _buildTextField("Paroisse de baptême", _paroisseBaptemeCtrl),
+                ),
+              ],
 
               const SizedBox(height: 32),
 
