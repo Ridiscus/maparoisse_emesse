@@ -14,7 +14,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:maparoisse/src/screens/home/settings_screen.dart';
 import 'package:maparoisse/src/screens/home/identification_screen.dart';
-
+import 'package:in_app_update/in_app_update.dart';
 
 
 class HomeScreen extends StatefulWidget {
@@ -69,6 +69,38 @@ class _HomeScreenState extends State<HomeScreen> {
       _getCurrentLocation();
     });
 
+    // Vérification de la mise à jour après un petit délai pour ne pas bloquer l'UI au démarrage
+    Future.delayed(const Duration(seconds: 2), () {
+      _checkForUpdate();
+    });
+
+  }
+
+
+
+
+  // --- GESTION DES MISES À JOUR (Google Play) ---
+  Future<void> _checkForUpdate() async {
+    try {
+      // 1. Vérifier s'il y a une mise à jour disponible
+      final info = await InAppUpdate.checkForUpdate();
+
+      if (info.updateAvailability == UpdateAvailability.updateAvailable) {
+
+        // OPTION A : MISE À JOUR IMMÉDIATE (Bloquante - Recommandée pour ton lancement)
+        // L'utilisateur DOIT mettre à jour pour continuer.
+        await InAppUpdate.performImmediateUpdate();
+
+        /* // OPTION B : MISE À JOUR FLEXIBLE (Non bloquante)
+        // Télécharge en fond, puis demande à l'utilisateur de redémarrer.
+        await InAppUpdate.startFlexibleUpdate();
+        await InAppUpdate.completeFlexibleUpdate();
+        */
+      }
+    } catch (e) {
+      print("Erreur InAppUpdate: $e");
+      // Ne rien faire, laisser l'utilisateur utiliser l'appli normalement
+    }
   }
 
 

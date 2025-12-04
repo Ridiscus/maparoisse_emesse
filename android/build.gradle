@@ -18,20 +18,30 @@ allprojects {
 }
 
 rootProject.buildDir = '../build'
+
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
-}
 
-// --- LE BLOC MAGIQUE POUR CORRIGER LES DÉPENDANCES ---
-subprojects {
+    // Verrouille le projet pour Flutter (toujours nécessaire)
+    project.evaluationDependsOn(':app')
+
     project.configurations.all {
         resolutionStrategy {
-            // On force le retour à des versions stables qui marchent avec AGP 8.5
+            // 1. Tes corrections AndroidX existantes (On les garde)
             force 'androidx.browser:browser:1.8.0'
             force 'androidx.core:core:1.13.1'
             force 'androidx.core:core-ktx:1.13.1'
             force 'androidx.activity:activity:1.9.0'
             force 'androidx.activity:activity-ktx:1.9.0'
+
+            // 2. ✅ LA CORRECTION MAGIQUE POUR KOTLIN (C'est ça qui manque !)
+            // Cela force toutes les dépendances à utiliser Kotlin 1.9.24
+            // pour éviter l'erreur "metadata version 2.2.0"
+            eachDependency { details ->
+                if (details.requested.group == 'org.jetbrains.kotlin') {
+                    details.useVersion "1.9.24"
+                }
+            }
         }
     }
 }
@@ -47,9 +57,6 @@ subprojects {
             }
         }
     }
-    
-    // Verrouille le projet pour Flutter (toujours à la fin)
-    project.evaluationDependsOn(':app')
 }
 
 tasks.register("clean", Delete) {

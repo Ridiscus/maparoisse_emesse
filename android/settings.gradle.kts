@@ -19,9 +19,9 @@ pluginManagement {
 plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
     // ON PASSE EN 8.5.0 (Version très stable et récente)
-    id("com.android.application") version "8.5.0" apply false
+    id("com.android.application") version "8.7.3" apply false
     id("com.google.gms.google-services") version "4.4.2" apply false
     // ON MET À JOUR KOTLIN EN 1.9.24 (Requis par les nouveaux plugins)
-    id("org.jetbrains.kotlin.android") version "1.9.24" apply false
+    id("org.jetbrains.kotlin.android") version "1.9.25" apply false
 }
 include(":app")
