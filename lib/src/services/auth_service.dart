@@ -2056,6 +2056,40 @@ class AuthService extends ChangeNotifier {
 
 
 
+  // --- NOUVEAU : Supprimer une demande de messe ---
+  Future<bool> deleteMassRequest(int id) async {
+    // Vérification auth
+    final token = _token;
+    if (token == null) return false;
+
+    final url = Uri.parse("$_baseUrl/messes/$id");
+
+    try {
+      final response = await http.delete(
+        url,
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print("Code Delete: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        return true; // Succès
+      } else {
+        final data = jsonDecode(response.body);
+        print("Erreur Delete: ${data['message']}");
+        return false;
+      }
+    } catch (e) {
+      print("Erreur réseau Delete: $e");
+      return false;
+    }
+  }
+
+
+
 
 
 

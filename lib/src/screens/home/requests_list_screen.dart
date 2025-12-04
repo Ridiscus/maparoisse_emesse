@@ -325,6 +325,72 @@ class _RequestsListScreenState extends State<RequestsListScreen> with TickerProv
     );
   }
 
+
+  // --- NOUVEAU : Logique de suppression ---
+  Future<void> _confirmAndDelete(int requestId) async {
+    final l10n = AppLocalizations.of(context)!;
+
+    // 1. Demander confirmation
+    final bool? confirm = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Theme.of(context).cardTheme.color,
+          title: Text("Supprimer la demande ?", style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+          content: Text(
+            "Voulez-vous vraiment supprimer cette demande en attente de paiement ?",
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text("Annuler"),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: TextButton.styleFrom(foregroundColor: AppTheme.errorColor),
+              child: const Text("Supprimer"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) return;
+
+    // 2. Appeler l'API
+    setState(() => _isLoading = true); // Petit chargement global ou local
+
+    // Convertir l'ID dynamique en int si nécessaire
+    final success = await _authService.deleteMassRequest(requestId);
+
+    if (success && mounted) {
+      // 3. Mise à jour locale : On retire l'élément de la liste _allRequests
+      setState(() {
+        _allRequests.removeWhere((r) => r['id'] == requestId);
+        _isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text("Demande supprimée avec succès."),
+          backgroundColor: AppTheme.successColor,
+        ),
+      );
+    } else {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text("Impossible de supprimer cette demande."),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    }
+  }
+
+
   // --- Widgets UI ---
   @override
   Widget build(BuildContext context) {
@@ -583,6 +649,13 @@ class _RequestsListScreenState extends State<RequestsListScreen> with TickerProv
     final String parishName = request['paroisse_name'] ?? 'Paroisse inconnue';
 
 
+    // Récupération sécurisée de l'ID
+    final int requestId = request['id'] is int ? request['id'] : int.parse(request['id'].toString());
+
+    // --- CONDITION : Est-ce qu'on peut supprimer ? ---
+    // Uniquement si "en_attente_paiement"
+    bool canDelete = status.toLowerCase() == 'en_attente_paiement';
+
     Widget trailingWidget = _buildStatusBadge(status);
 
     return GestureDetector(
@@ -635,8 +708,36 @@ class _RequestsListScreenState extends State<RequestsListScreen> with TickerProv
                 ],
               ),
             ),
-            const SizedBox(width: 8),
-            trailingWidget, // Badge
+
+            // --- MODIFICATION ICI ---
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                trailingWidget, // Le badge de statut
+
+                // Le bouton supprimer (visible uniquement si canDelete est vrai)
+                if (canDelete)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: InkWell(
+                      onTap: () => _confirmAndDelete(requestId), // Appelle la suppression
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: AppTheme.errorColor.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                            Icons.delete_outline,
+                            size: 20,
+                            color: AppTheme.errorColor
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ],
         ),
       ),
