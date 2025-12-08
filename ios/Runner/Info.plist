@@ -3,6 +3,10 @@
 <plist version="1.0">
 <dict>
     <key>NSLocationWhenInUseUsageDescription</key>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Cette application a besoin de votre localisation pour afficher les paroisses et horaires de messe à proximité.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>Cette application utilise votre localisation pour vous guider vers les paroisses même si l'application est en arrière-plan.</string>
     <string>Nous avons besoin de votre position pour vous suggérer les paroisses les plus proches.</string>
     <key>NSLocationAlwaysUsageDescription</key>
     <string>Cette application a besoin de votre position pour fonctionner en arrière-plan.</string>
