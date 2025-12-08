@@ -64,7 +64,7 @@ class DefaultFirebaseOptions {
     projectId: 'emesse-c9236',
     storageBucket: 'emesse-c9236.firebasestorage.app',
     androidClientId: '946263966195-6336o48tsustmqu8r8ssden4437o83g7.apps.googleusercontent.com',
-    iosBundleId: 'com.example.maparoisse',
+    iosBundleId: 'com.kkstechnologies.maparoisse',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -74,7 +74,7 @@ class DefaultFirebaseOptions {
     projectId: 'emesse-c9236',
     storageBucket: 'emesse-c9236.firebasestorage.app',
     androidClientId: '946263966195-6336o48tsustmqu8r8ssden4437o83g7.apps.googleusercontent.com',
-    iosBundleId: 'com.example.maparoisse',
+    iosBundleId: 'com.kkstechnologies.maparoisse',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
