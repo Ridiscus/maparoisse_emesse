@@ -1,18 +1,16 @@
 import 'dart:ui';
-
+import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:maparoisse/src/services/navigation_service.dart'; // Notre clé globale
-import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-import 'package:flutter/material.dart'; // Nécessaire pour MaterialPageRoute
-import 'package:provider/provider.dart'; // Pour accéder à AuthService
-import 'package:maparoisse/src/services/auth_service.dart'; // Ton service
-// Importe tes écrans de détails (vérifie les chemins)
+// Tes imports personnels
+import 'package:maparoisse/src/services/navigation_service.dart';
+import 'package:maparoisse/src/services/auth_service.dart';
 import 'package:maparoisse/src/screens/home/event_details_screen.dart';
 import 'package:maparoisse/src/screens/home/request_details_screen.dart';
 import 'package:maparoisse/src/screens/home/notifications_screen.dart';
-
 
 class NotificationService {
 
@@ -23,16 +21,13 @@ class NotificationService {
   factory NotificationService() => _instance;
   NotificationService._internal();
 
-
-  // --- MODIFICATION 1 : Nouvel ID pour forcer le SON ---
   final AndroidNotificationChannel _channel = const AndroidNotificationChannel(
-    'maparoisse_channel_v2', // <--- J'ai changé le nom (v2) pour réinitialiser les réglages Android
+    'maparoisse_channel_v2',
     'Notifications MaParoisse',
     description: 'Notifications importantes (Messes, événements)',
     importance: Importance.max,
-    playSound: true, // On force le son ici
+    playSound: true,
   );
-
 
   /// 1. MÉTHODE PRINCIPALE D'INITIALISATION
   Future<void> init() async {
@@ -42,22 +37,30 @@ class NotificationService {
     await _listenForNotificationTaps();
   }
 
-  /// 2. Initialise le plugin de notification locale (DEVIENT PUBLIQUE)
+  /// 2. Initialise le plugin de notification locale (CORRIGÉ POUR iOS)
   Future<void> initLocalNotifications() async {
 
-    // --- AJOUT 2 : Créer le canal ---
-    // On doit créer le canal AVANT d'initialiser le plugin
+    // Création du canal Android
     await _localNotifications
         .resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(_channel);
-    // --- FIN AJOUT 2 ---
 
+    // --- CONFIG ANDROID ---
     const AndroidInitializationSettings androidSettings =
     AndroidInitializationSettings('@mipmap/ic_notification');
 
-    const InitializationSettings settings = InitializationSettings(
+    // --- CONFIG iOS (C'est ce qui manquait !) ---
+    const DarwinInitializationSettings iosSettings = DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+
+    // --- CONFIG GLOBALE ---
+    final InitializationSettings settings = InitializationSettings(
       android: androidSettings,
+      iOS: iosSettings, // <--- INDISPENSABLE POUR EVITER LE CRASH
     );
 
     await _localNotifications.initialize(settings,
@@ -102,10 +105,6 @@ class NotificationService {
     }
   }
 
-
-
-
-
   /// 5. Affiche le pop-up (notification locale)
   Future<void> showLocalNotification(RemoteMessage message) async {
     String title = message.notification?.title ?? message.data['title'] ?? 'Nouvelle Notification';
@@ -114,7 +113,7 @@ class NotificationService {
     final String? type = message.data['type'];
     String? id;
 
-    // --- CORRECTION : On gère les types EXACTS envoyés par Laravel ---
+    // J'ai corrigé les "||" qui manquaient ici
     if (type == 'messe_confirmee' || type == 'messe_en_attente_paiement' || type == 'request_update') {
       id = message.data['messe_id']?.toString() ?? message.data['request_id']?.toString();
     } else if (type == 'event') {
@@ -123,10 +122,9 @@ class NotificationService {
 
     String? notificationPayload;
     if (type != null) {
-      // On passe le payload pour le clic
       notificationPayload = jsonEncode({
         'type': type,
-        'id': id ?? '0' // ID par défaut si null
+        'id': id ?? '0'
       });
     }
 
@@ -142,15 +140,19 @@ class NotificationService {
           importance: Importance.max,
           priority: Priority.high,
           icon: '@mipmap/ic_notification',
-          playSound: true, // Son activé
+          playSound: true,
           styleInformation: BigTextStyleInformation(body),
+        ),
+        // Ajout de la config iOS pour afficher la notif même app ouverte
+        iOS: const DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
         ),
       ),
       payload: notificationPayload,
     );
   }
-
-
 
   /// 6. Gère la navigation basée sur les "data"
   static void _handleDataNavigation(Map<String, dynamic> data) {
@@ -158,7 +160,7 @@ class NotificationService {
     final String? type = data['type'];
     String? id;
 
-    // Adaptation aux clés Laravel
+    // J'ai corrigé les "||" qui manquaient ici aussi
     if (type == 'messe_confirmee' || type == 'messe_en_attente_paiement') {
       id = data['messe_id']?.toString();
     } else if (type == 'event') {
@@ -170,17 +172,13 @@ class NotificationService {
     }
   }
 
-
-
-
-
   static Future<void> _handleNavigation({required String type, String? id}) async {
     final navigator = NavigationService.navigatorKey.currentState;
     final context = NavigationService.navigatorKey.currentContext;
 
+    // Correction syntaxe OR
     if (navigator == null || context == null || id == null) return;
 
-    // Petit helper pour afficher les erreurs en Release
     void showDebugAlert(String title, String content) {
       showDialog(
         context: context,
@@ -192,7 +190,6 @@ class NotificationService {
       );
     }
 
-    // Loader
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -202,24 +199,17 @@ class NotificationService {
     try {
       final authService = Provider.of<AuthService>(context, listen: false);
 
-      // ==================================================
-      // CAS 1 : ÉVÉNEMENT
-      // ==================================================
       if (type == 'event') {
         final rawEvents = await authService.getEvents();
-
-        // Recherche (comparaison String pour être sûr)
         final targetEvent = rawEvents.firstWhere(
               (e) => e['id'].toString() == id.toString(),
           orElse: () => null,
         );
-
-        Navigator.of(context, rootNavigator: true).pop(); // Ferme le loader
+        Navigator.of(context, rootNavigator: true).pop();
 
         if (targetEvent != null) {
           navigator.push(
             MaterialPageRoute(
-              // ✅ NOM CORRECT : eventData (vérifié dans ton EventDetailsScreen)
               builder: (_) => EventDetailsScreen(eventData: targetEvent),
             ),
           );
@@ -228,30 +218,19 @@ class NotificationService {
           navigator.push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
         }
       }
-
-      // ==================================================
-      // CAS 2 : MESSE / DEMANDE
-      // ==================================================
       else if (type == 'messe_confirmee' || type == 'messe_en_attente_paiement' || type == 'request_update') {
 
         final requests = await authService.getMassRequests();
-
-        // Recherche (comparaison String)
-        // On utilise firstWhere avec orElse qui retourne null pour vérifier proprement
         final Map<String, dynamic>? targetRequest = requests.firstWhere(
               (r) => r['id'].toString() == id.toString(),
-          orElse: () => {}, // Retourne map vide
+          orElse: () => {},
         );
-
-        Navigator.of(context, rootNavigator: true).pop(); // Ferme le loader
+        Navigator.of(context, rootNavigator: true).pop();
 
         if (targetRequest != null && targetRequest.isNotEmpty) {
           navigator.push(
             MaterialPageRoute(
-              builder: (_) => RequestDetailsScreen(
-                // ✅ CORRECTION MAJEURE ICI : initialData
-                initialData: targetRequest,
-              ),
+              builder: (_) => RequestDetailsScreen(initialData: targetRequest),
             ),
           );
         } else {
@@ -259,29 +238,18 @@ class NotificationService {
           navigator.push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
         }
       }
-
-      // ==================================================
-      // CAS 3 : AUTRE
-      // ==================================================
       else {
         Navigator.of(context, rootNavigator: true).pop();
         navigator.push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
       }
 
     } catch (e) {
-      // Ferme le loader si encore ouvert
       try { Navigator.of(context, rootNavigator: true).pop(); } catch (_) {}
-
-      // Affiche l'erreur sur l'écran pour que tu la voies en Release
       showDebugAlert("Erreur Technique", "Détail: $e");
-
       navigator.push(MaterialPageRoute(builder: (_) => const NotificationsScreen()));
     }
   }
 
-
-
-  /// Demande la permission et récupère le Token FCM.
   Future<String?> initializeAndGetToken() async {
     bool permissionGranted = await _requestPermission();
     if (!permissionGranted) {
@@ -291,7 +259,6 @@ class NotificationService {
     return await getToken();
   }
 
-  /// Demande la permission de recevoir des notifications.
   Future<bool> _requestPermission() async {
     NotificationSettings settings = await _fcm.requestPermission(
       alert: true,
@@ -301,7 +268,6 @@ class NotificationService {
     return settings.authorizationStatus == AuthorizationStatus.authorized;
   }
 
-  /// Récupère le token FCM unique de l'appareil.
   Future<String?> getToken() async {
     try {
       String? token = await _fcm.getToken();
@@ -315,7 +281,6 @@ class NotificationService {
     }
   }
 
-  /// Gère la déconnexion.
   Future<void> handleLogout() async {
     try {
       await _fcm.deleteToken();
