@@ -60,13 +60,14 @@
                 <string>Editor</string>
                 <key>CFBundleURLSchemes</key>
                 <array>
-                    <string>com.googleusercontent.apps.946263966195-6336o48tsustmqu8r8ssden4437o83g7</string>
+                    <string>com.googleusercontent.apps.946263966195-iuahqparg1denvtu4jantabubm93ih2k</string>
                 </array>
             </dict>
         </array>
 
+
         <key>GIDClientID</key>
-        <string>946263966195-6336o48tsustmqu8r8ssden4437o83g7.apps.googleusercontent.com</string>
+        <string>946263966195-iuahqparg1denvtu4jantabubm93ih2k.apps.googleusercontent.com</string>
 
 </dict>
 </plist>
