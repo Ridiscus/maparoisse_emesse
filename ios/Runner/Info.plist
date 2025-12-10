@@ -54,20 +54,18 @@
     <true/>
 
     <key>CFBundleURLTypes</key>
-    <array>
-        <dict>
-            <key>CFBundleTypeRole</key>
-            <string>Editor</string>
-            <key>CFBundleURLName</key>
-            <string>maparoisse</string>
-            <key>CFBundleURLSchemes</key>
-            <array>
-                <string>com.googleusercontent.apps.946263966195-iuahqparg1denvtu4jantabubm93ih2k</string>
-            </array>
-        </dict>
-    </array>
+        <array>
+            <dict>
+                <key>CFBundleTypeRole</key>
+                <string>Editor</string>
+                <key>CFBundleURLSchemes</key>
+                <array>
+                    <string>com.googleusercontent.apps.946263966195-6336o48tsustmqu8r8ssden4437o83g7</string>
+                </array>
+            </dict>
+        </array>
 
-    <key>GIDClientID</key>
+        <key>GIDClientID</key>
         <string>946263966195-6336o48tsustmqu8r8ssden4437o83g7.apps.googleusercontent.com</string>
 
 </dict>
