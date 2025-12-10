@@ -15,6 +15,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:maparoisse/src/screens/home/settings_screen.dart';
 import 'package:maparoisse/src/screens/home/identification_screen.dart';
 import 'package:in_app_update/in_app_update.dart';
+import 'dart:io';
 
 
 class HomeScreen extends StatefulWidget {
@@ -79,27 +80,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
 
 
-  // --- GESTION DES MISES À JOUR (Google Play) ---
   Future<void> _checkForUpdate() async {
+    // 1. SÉCURITÉ : Si on est sur iOS (ou Web, Windows...), on arrête tout de suite.
+    // Cela évite l'erreur "MissingPluginException".
+    if (!Platform.isAndroid) {
+      return;
+    }
+
     try {
-      // 1. Vérifier s'il y a une mise à jour disponible
+      // 2. Le code Android s'exécute uniquement ici
       final info = await InAppUpdate.checkForUpdate();
 
       if (info.updateAvailability == UpdateAvailability.updateAvailable) {
-
-        // OPTION A : MISE À JOUR IMMÉDIATE (Bloquante - Recommandée pour ton lancement)
-        // L'utilisateur DOIT mettre à jour pour continuer.
+        // OPTION A : MISE À JOUR IMMÉDIATE (Bloquante)
         await InAppUpdate.performImmediateUpdate();
-
-        /* // OPTION B : MISE À JOUR FLEXIBLE (Non bloquante)
-        // Télécharge en fond, puis demande à l'utilisateur de redémarrer.
-        await InAppUpdate.startFlexibleUpdate();
-        await InAppUpdate.completeFlexibleUpdate();
-        */
       }
     } catch (e) {
       print("Erreur InAppUpdate: $e");
-      // Ne rien faire, laisser l'utilisateur utiliser l'appli normalement
+      // On ne fait rien, l'utilisateur continue d'utiliser l'appli
     }
   }
 

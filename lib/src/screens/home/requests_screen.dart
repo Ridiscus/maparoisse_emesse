@@ -598,8 +598,9 @@ class _RequestsScreenState extends State<RequestsScreen>
                 // 2. AJOUTER le titre "Nouvelle demande"
                 title: Text(
                   'Nouvelle demande',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
+                      fontSize: 28,
                       color: Colors.white, // Texte blanc
                       shadows: [ // Ombre pour lisibilité
                         Shadow(
@@ -613,12 +614,13 @@ class _RequestsScreenState extends State<RequestsScreen>
                 actions: [
                   Container(
                     margin: const EdgeInsets.only(right: 8.0), // Marge à droite
+                    padding: const EdgeInsets.all(4.0),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.2), // Fond semi-transparent
                       shape: BoxShape.circle, // Forme circulaire
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.settings_outlined, color: Colors.white),
+                      icon: const Icon(Icons.settings_outlined, color: Colors.white, size: 30),
                       onPressed: () {
                         Navigator.pushNamed(context, '/parametres'); // Navigue vers paramètres
                       },

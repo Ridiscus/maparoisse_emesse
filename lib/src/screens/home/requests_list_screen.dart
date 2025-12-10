@@ -538,12 +538,13 @@ class _RequestsListScreenState extends State<RequestsListScreen> with TickerProv
         l10n.requests_title,
         style: Theme.of(context).textTheme.headlineMedium?.copyWith(
           fontWeight: FontWeight.bold,
+          fontSize: 32,
           color: Theme.of(context).colorScheme.onSurface, // Texte sombre sur fond clair
         ),
       ),
       actions: [
         IconButton(
-          icon: Icon(Icons.settings_outlined, color: Theme.of(context).colorScheme.onSurface,),
+          icon: Icon(Icons.settings_outlined, color: Theme.of(context).colorScheme.onSurface, size: 32),
           onPressed: () {
             Navigator.pushNamed(context, '/parametres'); // Navigation vers Paramètres
           },

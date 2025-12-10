@@ -167,11 +167,12 @@ class _ParishScreenState extends State<ParishScreen> {
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.bold,
             color: Theme.of(context).colorScheme.onSurface,
+            fontSize: 32,
           ),
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.settings_outlined, color: Theme.of(context).colorScheme.onSurface,),
+            icon: Icon(Icons.settings_outlined, color: Theme.of(context).colorScheme.onSurface, size: 32,),
             onPressed: () {
               Navigator.pushNamed(context, '/parametres');
             },
