@@ -302,7 +302,7 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
           l10n.events_title,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.bold,
-            fontSize: 32,
+            fontSize: 20,
             color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
@@ -310,7 +310,7 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
           IconButton(
             icon: Icon(Icons.settings_outlined,
                 color: Theme.of(context).colorScheme.onSurface,
-                size: 32,
+                size: 23,
             ),
             onPressed: () {
               Navigator.pushNamed(context, '/parametres');

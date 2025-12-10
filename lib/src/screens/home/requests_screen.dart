@@ -600,7 +600,7 @@ class _RequestsScreenState extends State<RequestsScreen>
                   'Nouvelle demande',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      fontSize: 28,
+                      fontSize: 18,
                       color: Colors.white, // Texte blanc
                       shadows: [ // Ombre pour lisibilité
                         Shadow(
@@ -620,7 +620,7 @@ class _RequestsScreenState extends State<RequestsScreen>
                       shape: BoxShape.circle, // Forme circulaire
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.settings_outlined, color: Colors.white, size: 30),
+                      icon: const Icon(Icons.settings_outlined, color: Colors.white, size: 22),
                       onPressed: () {
                         Navigator.pushNamed(context, '/parametres'); // Navigue vers paramètres
                       },
