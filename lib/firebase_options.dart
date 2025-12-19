@@ -51,7 +51,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyAB3dLS3ot2y7bJQI_FOxq9yQCYRH_2crk',
-    appId: '1:946263966195:android:3c2ba138a23290b021d286',
+    appId: '1:946263966195:android:b5672d9d64a4bae521d286',
     messagingSenderId: '946263966195',
     projectId: 'emesse-c9236',
     storageBucket: 'emesse-c9236.firebasestorage.app',

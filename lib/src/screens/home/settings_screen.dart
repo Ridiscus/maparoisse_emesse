@@ -87,7 +87,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         title: Text(
           l10n.settingsTitle,
-          style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.bold),
+          style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
+              fontWeight: FontWeight.bold,
+            fontSize: 21,
+          ),
         ),
         centerTitle: true,
       ),

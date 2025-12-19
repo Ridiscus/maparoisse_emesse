@@ -9,9 +9,9 @@ import 'package:maparoisse/src/services/navigation_service.dart'; // Notre clé 
 import 'package:flutter/material.dart'; // Pour le (route) => false
 import 'dart:io';
 import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart'; // <--- 1. IMPORT OBLIGATOIRE
 
-
-
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 
 
@@ -97,6 +97,23 @@ class AuthService extends ChangeNotifier {
     'Accept': 'application/json',
     'Authorization': 'Bearer $_token', // Ajoute le token
   };
+
+
+
+  // ✅ 2. AJOUTE CE NOUVEAU GETTER ICI
+  /// Vérifie si l'utilisateur actuel est connecté via Google
+  bool get isGoogleUser {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return false;
+
+    // On parcourt les fournisseurs (password, google.com, apple.com, etc.)
+    for (var userInfo in user.providerData) {
+      if (userInfo.providerId == 'google.com') {
+        return true; // C'est un utilisateur Google
+      }
+    }
+    return false; // C'est un utilisateur Email/Mot de passe classique
+  }
 
 
 
@@ -241,6 +258,51 @@ class AuthService extends ChangeNotifier {
   bool get hasUnreadNotifications {
     // On vérifie si la liste existe et si un seul élément a "isRead == false"
     return _notifications?.any((notif) => !notif.isRead) ?? false;
+  }
+
+
+
+
+  /// Fonction publique appelée par le bouton UI
+  Future<bool> signInWithApple() async {
+    try {
+      // 1. Ouvre la fenêtre native iOS
+      final AuthorizationCredentialAppleID appleCredential =
+      await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+
+      // 2. Prépare les données
+      // Attention : email/name peuvent être null après la 1ère connexion
+      String? email = appleCredential.email;
+      String? fullName;
+
+      if (appleCredential.givenName != null || appleCredential.familyName != null) {
+        fullName = "${appleCredential.givenName ?? ''} ${appleCredential.familyName ?? ''}".trim();
+      }
+
+      print("Apple Identity Token: ${appleCredential.identityToken?.substring(0, 20)}...");
+      print("Apple User ID: ${appleCredential.userIdentifier}");
+
+      // 3. Appelle ton API Backend (La fonction qu'on vient de créer au-dessus)
+      if (appleCredential.identityToken != null) {
+        return await loginWithApple(
+          appleCredential.identityToken!,
+          appleCredential.userIdentifier!, // C'est le 'apple_id'
+          email,
+          fullName,
+        );
+      }
+
+      return false;
+
+    } catch (e) {
+      print("Erreur Flow Apple (Annulation ou autre): $e");
+      return false;
+    }
   }
 
 
@@ -1043,6 +1105,79 @@ class AuthService extends ChangeNotifier {
     } catch (e) {
       print("Erreur getCheckoutUrl (catch): $e");
       throw Exception('Erreur réseau: $e');
+    }
+  }
+
+
+
+
+
+  /// Gère la connexion/inscription via Apple (API)
+  Future<bool> loginWithApple(String identityToken, String appleId, String? email, String? fullName) async {
+    // 1. On change l'endpoint (il faudra créer cette route côté Laravel)
+    final url = Uri.parse("$_baseUrl/auth/apple");
+
+    // 2. Construction du JSON
+    // Note : On n'envoie pas de 'profile_picture' car Apple n'en donne pas.
+    final body = jsonEncode({
+      "identity_token": identityToken, // Le JWT pour vérification
+      "apple_id": appleId,             // L'identifiant unique Apple (UserIdentifier)
+      "email": email,                  // Peut être null (si ce n'est pas la 1ère connexion)
+      "name": fullName,                // Peut être null (si ce n'est pas la 1ère connexion)
+    });
+
+    // --- PRINTS DE DÉBOGAGE (Comme pour Google) ---
+    print("--- [AuthService] Envoi des données Apple au Backend ---");
+    print("URL Cible: $url");
+    print("JSON Envoyé: $body");
+    print("-------------------------------------------------------");
+
+    try {
+      final response = await http.post(
+          url,
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: body
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 && data['status'] == 'success') {
+
+        print("--- [AuthService] Réponse Apple reçue ---");
+        print("Status Code: ${response.statusCode}");
+        print("JSON Reçu (data): $data");
+        print("---------------------------------------");
+
+        final String apiToken = data['access_token'];
+        final Map<String, dynamic> user = data['user'];
+
+        // 3. Sauvegarde des données
+        await _saveAuthData(
+            token: apiToken,
+            user: user,
+            civilite: null // Apple ne donne pas la civilité
+        );
+
+        // 4. Gestion FCM (Copier-coller de Google)
+        final String? fcmToken = await _notificationService.initializeAndGetToken();
+        if (fcmToken != null) {
+          _sendFCMTokenToBackend(fcmToken);
+        }
+
+        return true;
+
+      } else {
+        print("Erreur loginWithApple (API): ${data['message']}");
+        // Tu peux ajouter une gestion spécifique ici si besoin
+        return false;
+      }
+
+    } catch (e) {
+      print("Erreur loginWithApple (catch): $e");
+      return false;
     }
   }
 

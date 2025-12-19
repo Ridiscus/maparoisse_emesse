@@ -11,6 +11,11 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/services.dart'; // Pour contrôler le système
 import 'package:maparoisse/src/screens/password_reset/forgot_password_screen.dart';
 
+import 'dart:io'; // Pour Platform
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+
+
+
 
 // --- Couleurs du Mockup ---
 const Color _mockupTurquoise = Color(0xFF5AC3C2); // Couleur du titre "Se connecter"
@@ -371,8 +376,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               style: GoogleFonts.cormorantGaramond(
                                 fontSize: 34,
                                 fontWeight: FontWeight.bold,
-                                // Tu peux garder _mockupTurquoise si elle est visible sur fond noir,
-                                // sinon utilise theme.primaryColor ou theme.colorScheme.secondary
                                 color: _mockupTurquoise,
                               ),
                             ).animate().fadeIn(delay: 200.ms).slideY(begin: -0.2, duration: 500.ms),
@@ -388,7 +391,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   TextFormField(
                                     controller: _emailOrUserCtrl,
                                     focusNode: _emailOrUserFocus,
-                                    style: TextStyle(color: theme.colorScheme.onSurface), // Couleur de saisie
+                                    style: TextStyle(color: theme.colorScheme.onSurface),
                                     decoration: _buildInputDecoration(
                                       hintText: l10n.loginHintEmailOrUser,
                                       prefixIcon: Icons.person_2_outlined,
@@ -401,11 +404,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                   const SizedBox(height: 20),
 
-// Champ Mot de passe
+                                  // Champ Mot de passe
+
                                   TextFormField(
                                     controller: _passCtrl,
                                     focusNode: _passFocus,
-                                    style: TextStyle(color: theme.colorScheme.onSurface), // Couleur de saisie
+                                    style: TextStyle(color: theme.colorScheme.onSurface),
                                     obscureText: _obscurePassword,
                                     decoration: _buildInputDecoration(
                                       hintText: l10n.loginHintPassword,
@@ -413,7 +417,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                       suffixIcon: IconButton(
                                         icon: Icon(
                                           _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                                          // ✅ Couleur icône dynamique
                                           color: theme.colorScheme.onSurface.withOpacity(0.6),
                                         ),
                                         onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
@@ -426,10 +429,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                   const SizedBox(height: 30),
 
-                                  // Bouton Connexion (reste identique)
+                                  // Bouton Connexion
                                   ElevatedButton.icon(
                                     icon: const Icon(Icons.login, color: Colors.white),
-                                    label: Text(l10n.loginBtnLabel, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                                    label: Text(l10n.loginBtnLabel, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                                     onPressed: _isLoading || _isGoogleLoading ? null : _handleLogin,
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: _mockupOcre,
@@ -457,10 +460,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                         },
                                         child: Text(
                                           l10n.loginForgotPassword,
-
                                           style: GoogleFonts.inter(
-                                            // ✅ Couleur texte secondaire dynamique
                                             color: theme.colorScheme.onSurface.withOpacity(0.6),
+
                                             fontWeight: FontWeight.w600,
                                           ),
                                         ),
@@ -475,7 +477,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                   const SizedBox(height: 20),
 
-                                  // Boutons sociaux
+                                  // --- BOUTONS SOCIAUX ---
+
+                                  // 1. Google (Existant)
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
@@ -485,6 +489,41 @@ class _LoginScreenState extends State<LoginScreen> {
                                       ).animate().fadeIn(delay: 900.ms).slideX(begin: -0.3),
                                     ],
                                   ),
+
+                                  // ✅ 2. APPLE (Uniquement sur iOS)
+                                  if (Platform.isIOS) ...[
+                                    const SizedBox(height: 20),
+                                    SignInWithAppleButton(
+                                      text: "Se connecter avec Apple", // Optionnel, par défaut c'est en anglais
+                                      onPressed: () async {
+                                        setState(() => _isLoading = true); // Affiche le loader global
+                                        try {
+                                          final auth = Provider.of<AuthService>(context, listen: false);
+                                          bool success = await auth.signInWithApple();
+
+                                          if (success && mounted) {
+                                            // Redirection vers l'accueil
+                                            Navigator.pushReplacementNamed(context, '/home');
+                                          } else if (mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text("Échec de la connexion Apple"),
+                                                backgroundColor: Colors.red,
+                                              ),
+                                            );
+                                          }
+                                        } catch (e) {
+                                          // Gérer erreur
+                                        } finally {
+                                          if (mounted) setState(() => _isLoading = false);
+                                        }
+                                      },
+                                      height: 50,
+                                      // Style Noir pour être conforme aux guidelines Apple
+                                      style: SignInWithAppleButtonStyle.black,
+                                      borderRadius: const BorderRadius.all(Radius.circular(12)),
+                                    ).animate().fadeIn(delay: 1000.ms).slideY(begin: 0.2),
+                                  ],
                                 ],
                               ),
                             ),
@@ -496,10 +535,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                 ),
 
-              // --- 3. Loader ---
+             // --- 3. Loader ---
               if (_isLoading)
                 Container(
-                  // ✅ Fond du loader dynamique
                   color: theme.scaffoldBackgroundColor.withOpacity(0.85),
                   child: const CustomCircularLoader(
                     color: _mockupOcre,
@@ -513,6 +551,10 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
+
+
+
+
 
 
 

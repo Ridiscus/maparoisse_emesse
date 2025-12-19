@@ -73,24 +73,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
 
 
-  // --- NOUVELLE FONCTION _saveProfile ---
+  // ✅ MODIFICATION DE LA FONCTION _saveProfile
   Future<void> _saveProfile() async {
     // 1. Valide le formulaire (nom, téléphone, etc.)
     if (!_formKey.currentState!.validate()) {
-      return; // Ne pas continuer si le formulaire est invalide
+      return;
     }
 
-    // 2. Le formulaire est valide, on affiche le modal de mot de passe
-    // Il renverra 'true' si le mot de passe est correct
-    final bool? passwordVerified = await _showPasswordVerificationModal();
+    // 2. Récupère le service d'authentification
+    final auth = Provider.of<AuthService>(context, listen: false);
 
-    // 3. On vérifie le résultat du modal
-    if (passwordVerified == true) {
-      // Le mot de passe était correct !
-      // On lance enfin la sauvegarde (l'ancienne fonction renommée)
+    // 3. LOGIQUE CONDITIONNELLE
+    if (auth.isGoogleUser) {
+      // CAS A : Utilisateur Google -> PAS DE MOT DE PASSE
+      // On sauvegarde directement sans poser de question
       await _executeSave();
+    } else {
+      // CAS B : Utilisateur Classique -> MOT DE PASSE REQUIS
+      final bool? passwordVerified = await _showPasswordVerificationModal();
+
+      if (passwordVerified == true) {
+        await _executeSave();
+      }
     }
-    // Si 'passwordVerified' est false ou null (modal fermé), on ne fait rien.
   }
 
 
