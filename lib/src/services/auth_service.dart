@@ -18,9 +18,9 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 class AuthService extends ChangeNotifier {
   // --- NOUVELLE BASE URL POUR L'API ---
-  static const String _baseUrl = "https://sancta-missa.com/api";
 
-  //static const String _baseUrl = "https://e-messe-ci.com/api";
+
+  static const String _baseUrl = "https://e-messe-ci.com/api";
 
 
   // --- 1. AJOUTE CETTE LIGNE ---

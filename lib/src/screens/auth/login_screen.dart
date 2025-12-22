@@ -503,7 +503,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                           if (success && mounted) {
                                             // Redirection vers l'accueil
-                                            Navigator.pushReplacementNamed(context, '/home');
+                                            Navigator.pushReplacementNamed(context, '/dashboard');
                                           } else if (mounted) {
                                             ScaffoldMessenger.of(context).showSnackBar(
                                               const SnackBar(
