@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'dart:io';
 import 'dart:convert';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -268,13 +269,44 @@ class NotificationService {
     return settings.authorizationStatus == AuthorizationStatus.authorized;
   }
 
+
+  /// Récupère le token FCM (Version adaptée et sécurisée pour iOS)
   Future<String?> getToken() async {
     try {
+      // 1. SPÉCIFIQUE iOS : On vérifie d'abord que Apple nous a donné le feu vert (APNS)
+      if (Platform.isIOS) {
+        String? apnsToken = await _fcm.getAPNSToken();
+
+        // Si pas de token APNS, on attend 1 seconde et on réessaie
+        if (apnsToken == null) {
+          print("[NotificationService] Token APNS pas encore prêt, attente 1s...");
+          await Future.delayed(const Duration(seconds: 1));
+          apnsToken = await _fcm.getAPNSToken();
+        }
+
+        // Si toujours rien, on attend encore 2 secondes
+        if (apnsToken == null) {
+          print("[NotificationService] Toujours rien... attente 2s...");
+          await Future.delayed(const Duration(seconds: 2));
+          apnsToken = await _fcm.getAPNSToken();
+        }
+
+        // Si après 3 secondes on a toujours rien, on arrête pour éviter le crash
+        if (apnsToken == null) {
+          print("⚠️ [NotificationService] Impossible d'obtenir le token APNS d'Apple.");
+          print("👉 Si tu es sur Simulateur, c'est normal. Sur un vrai iPhone, vérifie ta config Push.");
+          return null;
+        }
+      }
+
+      // 2. Maintenant on peut demander le token FCM en toute sécurité (Android & iOS)
       String? token = await _fcm.getToken();
+
       print("--- [NotificationService] Token FCM ---");
       print(token);
       print("---------------------------------------");
       return token;
+
     } catch (e) {
       print("[NotificationService] Erreur lors de la récupération du token: $e");
       return null;

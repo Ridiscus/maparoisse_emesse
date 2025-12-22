@@ -20,6 +20,8 @@ class AuthService extends ChangeNotifier {
   // --- NOUVELLE BASE URL POUR L'API ---
   static const String _baseUrl = "https://sancta-missa.com/api";
 
+  //static const String _baseUrl = "https://e-messe-ci.com/api";
+
 
   // --- 1. AJOUTE CETTE LIGNE ---
   /// La liste des notifications en cache pour l'application.
