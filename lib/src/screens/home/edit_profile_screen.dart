@@ -84,9 +84,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final auth = Provider.of<AuthService>(context, listen: false);
 
     // 3. LOGIQUE CONDITIONNELLE
-    if (auth.isGoogleUser) {
-      // CAS A : Utilisateur Google -> PAS DE MOT DE PASSE
-      // On sauvegarde directement sans poser de question
+    // On utilise le nouveau getter qui couvre Google ET Apple
+    if (auth.isSocialUser) {
+      // CAS A : Utilisateur Social -> PAS DE MOT DE PASSE
+      print("Utilisateur Social (Google/Apple) : Sauvegarde directe.");
       await _executeSave();
     } else {
       // CAS B : Utilisateur Classique -> MOT DE PASSE REQUIS

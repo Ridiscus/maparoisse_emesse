@@ -102,19 +102,19 @@ class AuthService extends ChangeNotifier {
 
 
 
-  // ✅ 2. AJOUTE CE NOUVEAU GETTER ICI
-  /// Vérifie si l'utilisateur actuel est connecté via Google
-  bool get isGoogleUser {
+
+  // ✅ GETTER INTELLIGENT : Détecte Google OU Apple
+  bool get isSocialUser {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return false;
 
-    // On parcourt les fournisseurs (password, google.com, apple.com, etc.)
     for (var userInfo in user.providerData) {
-      if (userInfo.providerId == 'google.com') {
-        return true; // C'est un utilisateur Google
+      // On vérifie si le fournisseur est Google ou Apple
+      if (userInfo.providerId == 'google.com' || userInfo.providerId == 'apple.com') {
+        return true;
       }
     }
-    return false; // C'est un utilisateur Email/Mot de passe classique
+    return false; // C'est un utilisateur Email/Mdp classique
   }
 
 
@@ -1798,8 +1798,6 @@ class AuthService extends ChangeNotifier {
       return false;
     }
   }
-
-
 
 
 
