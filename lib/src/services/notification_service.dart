@@ -270,48 +270,66 @@ class NotificationService {
   }
 
 
-  /// Récupère le token FCM (Version adaptée et sécurisée pour iOS)
+
   Future<String?> getToken() async {
     try {
-      // 1. SPÉCIFIQUE iOS : On vérifie d'abord que Apple nous a donné le feu vert (APNS)
+      // 1. D'abord, on s'assure d'avoir la permission !
+      // Si on ne demande pas la permission, Apple ne génère pas de token.
+      NotificationSettings settings = await _fcm.requestPermission(
+        alert: true, badge: true, sound: true,
+      );
+
+      if (settings.authorizationStatus != AuthorizationStatus.authorized) {
+        print("⚠️ Permission notif refusée. Pas de token.");
+        return null;
+      }
+
+      // 2. SPÉCIFIQUE iOS : On attend le token APNS
       if (Platform.isIOS) {
         String? apnsToken = await _fcm.getAPNSToken();
 
-        // Si pas de token APNS, on attend 1 seconde et on réessaie
+        // Tentative 1 (1 seconde)
         if (apnsToken == null) {
-          print("[NotificationService] Token APNS pas encore prêt, attente 1s...");
+          print("Attente APNS (1s)...");
           await Future.delayed(const Duration(seconds: 1));
           apnsToken = await _fcm.getAPNSToken();
         }
 
-        // Si toujours rien, on attend encore 2 secondes
+        // Tentative 2 (2 secondes de plus)
         if (apnsToken == null) {
-          print("[NotificationService] Toujours rien... attente 2s...");
+          print("Attente APNS (2s)...");
           await Future.delayed(const Duration(seconds: 2));
           apnsToken = await _fcm.getAPNSToken();
         }
 
-        // Si après 3 secondes on a toujours rien, on arrête pour éviter le crash
+        // Tentative 3 (3 secondes de plus - Total 6s)
         if (apnsToken == null) {
-          print("⚠️ [NotificationService] Impossible d'obtenir le token APNS d'Apple.");
-          print("👉 Si tu es sur Simulateur, c'est normal. Sur un vrai iPhone, vérifie ta config Push.");
+          print("Attente APNS (3s)...");
+          await Future.delayed(const Duration(seconds: 3));
+          apnsToken = await _fcm.getAPNSToken();
+        }
+
+        if (apnsToken == null) {
+          print("⚠️ Impossible d'obtenir APNS. (Simulateur ? Config Xcode ?)");
+          // Sur iOS, sans APNS, getToken() va planter ou rendre null.
+          // On retourne null proprement.
           return null;
         }
       }
 
-      // 2. Maintenant on peut demander le token FCM en toute sécurité (Android & iOS)
+      // 3. Récupération Token FCM
       String? token = await _fcm.getToken();
-
-      print("--- [NotificationService] Token FCM ---");
-      print(token);
-      print("---------------------------------------");
+      print("--- Token FCM : $token ---");
       return token;
 
     } catch (e) {
-      print("[NotificationService] Erreur lors de la récupération du token: $e");
+      print("Erreur getToken: $e");
       return null;
     }
   }
+
+
+
 
   Future<void> handleLogout() async {
     try {

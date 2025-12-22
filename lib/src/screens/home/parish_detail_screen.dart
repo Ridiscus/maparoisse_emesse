@@ -81,7 +81,7 @@ class _ParishDetailScreenState extends State<ParishDetailScreen> {
         }
 
         // 5. Reconstruit l'URL PROPRE
-        imageUrl = "https://sancta-missa.com/storage/" + imgPath;
+        imageUrl = "https://e-messe-ci.com/storage/" + imgPath;
         print("URL Paroisse Détail: $imageUrl"); // Pour déboguer
         // --- FIN CORRECTION ---
       }

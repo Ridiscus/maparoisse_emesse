@@ -340,7 +340,7 @@ class _ParishScreenState extends State<ParishScreen> {
         }
 
         // 5. Reconstruit l'URL PROPRE
-        final finalUrl = "https://sancta-missa.com/storage/" + imgPath;
+        final finalUrl = "https://e-messe-ci.com/storage/" + imgPath;
         print("URL Paroisse Liste: $finalUrl"); // Pour déboguer
         backgroundImage = NetworkImage(finalUrl);
         // --- FIN CORRECTION ---

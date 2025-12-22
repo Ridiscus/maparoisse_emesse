@@ -156,10 +156,6 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
 
-  // --- _handleAppleSignIn (exemple, à adapter) ---
-  Future<void> _handleAppleSignIn() async {
-    // ... (Logique Apple Sign In à ajouter)
-  }
 
 
 
@@ -478,31 +474,53 @@ class _LoginScreenState extends State<LoginScreen> {
                                   const SizedBox(height: 20),
 
                                   // --- BOUTONS SOCIAUX ---
-
-                                  // 1. Google (Existant)
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      _buildSocialButton(
-                                        iconPath: 'assets/images/google-logo.png',
-                                        onPressed: _isGoogleLoading || _isLoading ? null : () { _handleGoogleSignIn(); },
-                                      ).animate().fadeIn(delay: 900.ms).slideX(begin: -0.3),
-                                    ],
-                                  ),
+                                  // 1. GOOGLE (Style harmonisé avec Apple)
+                                  ElevatedButton(
+                                    onPressed: _isGoogleLoading || _isLoading ? null : _handleGoogleSignIn,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.white, // Fond blanc standard Google
+                                      foregroundColor: Colors.black87, // Texte gris sombre/noir
+                                      elevation: 2, // Légère ombre pour le relief
+                                      minimumSize: const Size(double.infinity, 50), // Même hauteur que Apple (50)
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12), // Même arrondi que Apple (12)
+                                        side: const BorderSide(color: Colors.black12), // Légère bordure grise
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        // Logo Google
+                                        Image.asset(
+                                          'assets/images/google-logo.png',
+                                          height: 24, // Taille standard de l'icône
+                                        ),
+                                        const SizedBox(width: 12), // Espacement
+                                        const Text(
+                                          "Se connecter avec Google",
+                                          style: TextStyle(
+                                            fontSize: 16, // Même taille de police (environ)
+                                            fontWeight: FontWeight.w500,
+                                            fontFamily: '-apple-system', // Police système pour faire propre
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ).animate().fadeIn(delay: 900.ms).slideX(begin: -0.2),
 
                                   // ✅ 2. APPLE (Uniquement sur iOS)
                                   if (Platform.isIOS) ...[
-                                    const SizedBox(height: 20),
+                                    const SizedBox(height: 16), // Espacement entre les deux boutons
+
                                     SignInWithAppleButton(
-                                      text: "Se connecter avec Apple", // Optionnel, par défaut c'est en anglais
+                                      text: "Se connecter avec Apple",
                                       onPressed: () async {
-                                        setState(() => _isLoading = true); // Affiche le loader global
+                                        setState(() => _isLoading = true);
                                         try {
                                           final auth = Provider.of<AuthService>(context, listen: false);
                                           bool success = await auth.signInWithApple();
 
                                           if (success && mounted) {
-                                            // Redirection vers l'accueil
                                             Navigator.pushReplacementNamed(context, '/dashboard');
                                           } else if (mounted) {
                                             ScaffoldMessenger.of(context).showSnackBar(
@@ -511,6 +529,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                                 backgroundColor: Colors.red,
                                               ),
                                             );
+
                                           }
                                         } catch (e) {
                                           // Gérer erreur
@@ -518,12 +537,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                           if (mounted) setState(() => _isLoading = false);
                                         }
                                       },
-                                      height: 50,
-                                      // Style Noir pour être conforme aux guidelines Apple
-                                      style: SignInWithAppleButtonStyle.black,
-                                      borderRadius: const BorderRadius.all(Radius.circular(12)),
+                                      height: 50, // Hauteur imposée à 50
+                                      style: SignInWithAppleButtonStyle.black, // Fond Noir
+                                      borderRadius: const BorderRadius.all(Radius.circular(12)), // Arrondi 12
                                     ).animate().fadeIn(delay: 1000.ms).slideY(begin: 0.2),
                                   ],
+
                                 ],
                               ),
                             ),

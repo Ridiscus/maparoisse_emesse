@@ -514,7 +514,7 @@ class AuthService extends ChangeNotifier {
           apiPhotoPath = apiPhotoPath.substring(1);
         }
         // Ajoute le dossier "storage"
-        finalPhotoUrl = "https://sancta-missa.com/storage/" + apiPhotoPath;
+        finalPhotoUrl = "https://e-messe-ci.com/storage/" + apiPhotoPath;
       }
       // --- FIN CORRECTION ---
 
@@ -1113,22 +1113,16 @@ class AuthService extends ChangeNotifier {
 
 
 
-
-  /// Gère la connexion/inscription via Apple (API)
   Future<bool> loginWithApple(String identityToken, String appleId, String? email, String? fullName) async {
-    // 1. On change l'endpoint (il faudra créer cette route côté Laravel)
     final url = Uri.parse("$_baseUrl/auth/apple");
 
-    // 2. Construction du JSON
-    // Note : On n'envoie pas de 'profile_picture' car Apple n'en donne pas.
     final body = jsonEncode({
-      "identity_token": identityToken, // Le JWT pour vérification
-      "apple_id": appleId,             // L'identifiant unique Apple (UserIdentifier)
-      "email": email,                  // Peut être null (si ce n'est pas la 1ère connexion)
-      "name": fullName,                // Peut être null (si ce n'est pas la 1ère connexion)
+      "identity_token": identityToken,
+      "apple_id": appleId,
+      "email": email,
+      "name": fullName,
     });
 
-    // --- PRINTS DE DÉBOGAGE (Comme pour Google) ---
     print("--- [AuthService] Envoi des données Apple au Backend ---");
     print("URL Cible: $url");
     print("JSON Envoyé: $body");
@@ -1156,24 +1150,35 @@ class AuthService extends ChangeNotifier {
         final String apiToken = data['access_token'];
         final Map<String, dynamic> user = data['user'];
 
-        // 3. Sauvegarde des données
+        // 3. Sauvegarde des données (CRITIQUE : Doit marcher)
         await _saveAuthData(
             token: apiToken,
             user: user,
-            civilite: null // Apple ne donne pas la civilité
+            civilite: null
         );
 
-        // 4. Gestion FCM (Copier-coller de Google)
-        final String? fcmToken = await _notificationService.initializeAndGetToken();
-        if (fcmToken != null) {
-          _sendFCMTokenToBackend(fcmToken);
+        // 4. Gestion FCM (NON BLOQUANTE)
+        // On isole cette partie. Si elle échoue (ex: Simulateur, erreur APNS),
+        // l'utilisateur est QUAND MÊME connecté.
+        try {
+          print("Tentative de récupération du token FCM...");
+          final String? fcmToken = await _notificationService.initializeAndGetToken();
+
+          if (fcmToken != null) {
+            // On ne met pas 'await' ici pour ne pas ralentir l'UI, ou alors un await rapide
+            _sendFCMTokenToBackend(fcmToken);
+          } else {
+            print("⚠️ AVERTISSEMENT: Pas de token FCM (Normal sur Simulateur). Login continue.");
+          }
+        } catch (e) {
+          print("Erreur FCM silencieuse (Apple): $e");
+          // On ne fait rien, on laisse l'utilisateur entrer
         }
 
-        return true;
+        return true; // ✅ SUCCÈS GARANTI
 
       } else {
         print("Erreur loginWithApple (API): ${data['message']}");
-        // Tu peux ajouter une gestion spécifique ici si besoin
         return false;
       }
 
@@ -1186,29 +1191,21 @@ class AuthService extends ChangeNotifier {
 
 
 
-
-
-  /// MODIFIÉ : Gère la connexion/inscription via Google
   Future<bool> loginWithGoogle(String idToken, String email, String? name, String googleId, String? photoUrl) async {
     final url = Uri.parse("$_baseUrl/auth/google");
 
-    // --- CORRECTION : Ajoute la photo de profil ---
     final body = jsonEncode({
       "id_token": idToken,
       "email": email,
       "name": name ?? "",
-      "googleId": googleId, // En gardant le nom 'googleId' (sans underscore)
-      "profile_picture": photoUrl ?? "" // <-- Le champ photo (basé sur ton JSON)
+      "googleId": googleId,
+      "profile_picture": photoUrl ?? ""
     });
-    // --- FIN CORRECTION ---
 
-
-    // --- AJOUT DES PRINTS DE DÉBOGAGE ---
-    print("--- [AuthService] Envoi des données au Backend ---");
+    print("--- [AuthService] Envoi des données Google au Backend ---");
     print("URL Cible: $url");
     print("JSON Envoyé: $body");
     print("-------------------------------------------------");
-    // --- FIN DE L'AJOUT ---
 
     try {
       final response = await http.post(
@@ -1224,35 +1221,38 @@ class AuthService extends ChangeNotifier {
 
       if (response.statusCode == 200 && data['status'] == 'success') {
 
-
-        // --- NOUVEAU PRINT DE DÉBOGAGE ---
-        print("--- [AuthService] Réponse reçue du Backend ---");
+        print("--- [AuthService] Réponse Google reçue ---");
         print("Status Code: ${response.statusCode}");
         print("JSON Reçu (data): $data");
         print("---------------------------------------------");
-        // --- FIN DE L'AJOUT ---
 
-        // ... (le reste de ta fonction _saveAuthData est correct) ...
         final String apiToken = data['access_token'];
         final Map<String, dynamic> user = data['user'];
 
+        // Sauvegarde critique
         await _saveAuthData(
             token: apiToken,
             user: user,
             civilite: null
         );
 
+        // 4. Gestion FCM (NON BLOQUANTE)
+        // Même logique de protection que pour Apple
+        try {
+          print("Tentative de récupération du token FCM (Google)...");
+          final String? fcmToken = await _notificationService.initializeAndGetToken();
 
-        // --- AJOUTE CECI APRÈS LA CONNEXION RÉUSSIE ---
-        // Demande le token FCM et envoie-le au backend
-        final String? fcmToken = await _notificationService.initializeAndGetToken();
-        if (fcmToken != null) {
-          // N'attend pas (await) : fais-le en arrière-plan
-          _sendFCMTokenToBackend(fcmToken);
+          if (fcmToken != null) {
+            _sendFCMTokenToBackend(fcmToken);
+          } else {
+            print("⚠️ AVERTISSEMENT: Pas de token FCM. Login continue.");
+          }
+        } catch (e) {
+          print("Erreur FCM silencieuse (Google): $e");
+          // On continue
         }
-        // --- FIN AJOUT ---
 
-        return true;
+        return true; // ✅ SUCCÈS GARANTI
 
       } else {
         print("Erreur loginWithGoogle (API): ${data['message']}");
@@ -1264,6 +1264,7 @@ class AuthService extends ChangeNotifier {
       return false;
     }
   }
+
 
 
   /// API 1 : Envoie le token FCM au backend (après une connexion réussie)

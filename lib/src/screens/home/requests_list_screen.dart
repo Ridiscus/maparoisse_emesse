@@ -910,7 +910,7 @@ class _RequestsListScreenState extends State<RequestsListScreen> with TickerProv
     ImageProvider backgroundImage;
     if (imageUrl != null && imageUrl.isNotEmpty) {
       if (!imageUrl.startsWith('http')) {
-        imageUrl = "https://sancta-missa.com/storage/" + imageUrl;
+        imageUrl = "https://e-messe-ci.com/storage/" + imageUrl;
       }
       backgroundImage = NetworkImage(imageUrl);
     } else {
