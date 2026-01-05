@@ -514,32 +514,32 @@ class _LoginScreenState extends State<LoginScreen> {
                                     SignInWithAppleButton(
                                       text: "Se connecter avec Apple",
                                       onPressed: () async {
-                                        // 1. Lance le chargement
+                                        // 1. 📸 CAPTURE DES RÉFÉRENCES (Le secret est ici !)
+                                        // On sauvegarde les outils de navigation AVANT de faire quoi que ce soit d'async
+                                        final navigator = Navigator.of(context);
+                                        final messenger = ScaffoldMessenger.of(context);
+                                        final auth = Provider.of<AuthService>(context, listen: false);
+
+                                        // 2. Lance le chargement
                                         setState(() => _isLoading = true);
 
                                         try {
-                                          // On récupère auth AVANT les opérations async pour être sûr
-                                          final auth = Provider.of<AuthService>(context, listen: false);
-
-                                          // 2. Appel async
+                                          // 3. Appel au service
                                           bool success = await auth.signInWithApple();
 
-                                          // 3. Arrêt du chargement (vérification mounted)
+                                          // 4. Arrêt du chargement
                                           if (mounted) setState(() => _isLoading = false);
 
-                                          // 4. Gestion du succès
+                                          // 5. Gestion du résultat
                                           if (success) {
 
-                                            // Pause pour laisser la fenêtre Apple se fermer
+                                            // Petite pause pour laisser l'animation Apple finir
                                             await Future.delayed(const Duration(milliseconds: 500));
 
-                                            // 🚨 CORRECTION CRUCIALE ICI 🚨
-                                            // On revérifie si l'écran est toujours là après la pause.
-                                            // S'il n'est plus là, on arrête tout (return) pour éviter le crash.
-                                            if (!mounted) return;
+                                            // ✅ UTILISATION DES RÉFÉRENCES CAPTURÉES
+                                            // On n'utilise plus 'context', on utilise 'messenger' et 'navigator' stockés
 
-                                            // Maintenant, on peut utiliser 'context' en toute sécurité
-                                            ScaffoldMessenger.of(context).showSnackBar(
+                                            messenger.showSnackBar(
                                               SnackBar(
                                                 content: Row(
                                                   children: const [
@@ -554,24 +554,22 @@ class _LoginScreenState extends State<LoginScreen> {
                                               ),
                                             );
 
-                                            Navigator.pushReplacementNamed(context, '/dashboard');
+                                            // Redirection immédiate
+                                            navigator.pushReplacementNamed('/dashboard');
 
                                           } else {
-                                            // Gestion de l'échec
-                                            if (mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(
-                                                  content: Text("Échec de la connexion Apple."),
-                                                  backgroundColor: Colors.red,
-                                                ),
-                                              );
-                                            }
+                                            // Échec
+                                            messenger.showSnackBar(
+                                              const SnackBar(
+                                                content: Text("Échec de la connexion Apple."),
+                                                backgroundColor: Colors.red,
+                                              ),
+                                            );
                                           }
                                         } catch (e) {
+                                          print("Erreur UI Apple: $e");
 
-                                          print("Erreur Apple Sign In: $e");
                                         } finally {
-                                          // Sécurité finale pour le loader
                                           if (mounted && _isLoading) {
                                             setState(() => _isLoading = false);
                                           }
