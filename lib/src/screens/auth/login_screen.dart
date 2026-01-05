@@ -162,7 +162,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
 
   // DANS L'ÉCRAN DE CONNEXION (ex: login_screen.dart)
-
   Future<void> _handleGoogleSignIn() async {
     final l10n = AppLocalizations.of(context)!;
 
@@ -510,36 +509,65 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                   // ✅ 2. APPLE (Uniquement sur iOS)
                                   if (Platform.isIOS) ...[
-                                    const SizedBox(height: 16), // Espacement entre les deux boutons
+                                    const SizedBox(height: 16),
 
                                     SignInWithAppleButton(
                                       text: "Se connecter avec Apple",
                                       onPressed: () async {
+                                        // 1. Lance le chargement
                                         setState(() => _isLoading = true);
+
                                         try {
                                           final auth = Provider.of<AuthService>(context, listen: false);
+
+                                          // 2. Appelle le service (qui fait tout le boulot)
                                           bool success = await auth.signInWithApple();
 
+                                          // 3. Arrête le chargement
+                                          if (mounted) setState(() => _isLoading = false);
+
+                                          // 4. SI C'EST BON : ON NAVIGUE ! 🚀
                                           if (success && mounted) {
-                                            Navigator.pushReplacementNamed(context, '/dashboard');
-                                          } else if (mounted) {
+
+                                            // Petit message de succès (comme Google)
                                             ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(
-                                                content: Text("Échec de la connexion Apple"),
-                                                backgroundColor: Colors.red,
+                                              SnackBar(
+                                                content: Row(
+                                                  children: const [
+                                                    Icon(Icons.check_circle, color: Colors.white),
+                                                    SizedBox(width: 12),
+                                                    Text("Connexion Apple réussie", style: TextStyle(fontWeight: FontWeight.bold)),
+                                                  ],
+                                                ),
+                                                backgroundColor: Colors.green,
+                                                behavior: SnackBarBehavior.floating,
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                               ),
                                             );
 
+                                            // LA LIGNE QUI MANQUAIT : Redirection vers le Dashboard
+                                            Navigator.pushReplacementNamed(context, '/dashboard');
+
+                                          } else if (mounted) {
+                                            // Si ça échoue (mais pas d'erreur crash)
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text("Échec de la connexion Apple."),
+                                                backgroundColor: Colors.red,
+                                              ),
+                                            );
                                           }
                                         } catch (e) {
-                                          // Gérer erreur
+                                          print("Erreur UI Apple: $e");
                                         } finally {
-                                          if (mounted) setState(() => _isLoading = false);
+                                          // Sécurité pour être sûr que le loader part
+                                          if (mounted && _isLoading) setState(() => _isLoading = false);
                                         }
                                       },
-                                      height: 50, // Hauteur imposée à 50
-                                      style: SignInWithAppleButtonStyle.black, // Fond Noir
-                                      borderRadius: const BorderRadius.all(Radius.circular(12)), // Arrondi 12
+                                      height: 50,
+
+                                      style: SignInWithAppleButtonStyle.black,
+                                      borderRadius: const BorderRadius.all(Radius.circular(12)),
                                     ).animate().fadeIn(delay: 1000.ms).slideY(begin: 0.2),
                                   ],
 
