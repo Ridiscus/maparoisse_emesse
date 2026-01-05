@@ -534,7 +534,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           if (success) {
 
                                             // Petite pause pour laisser l'animation Apple finir
-                                            await Future.delayed(const Duration(milliseconds: 500));
+                                            //await Future.delayed(const Duration(milliseconds: 500));
 
                                             // ✅ UTILISATION DES RÉFÉRENCES CAPTURÉES
                                             // On n'utilise plus 'context', on utilise 'messenger' et 'navigator' stockés
