@@ -280,6 +280,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
 
 
+
+
+
   void _showError(String message) {
     // Détecte si c'est une erreur de connexion pour adapter le message
     bool isNetworkError = message.contains('Internet') || message.contains('connexion');
