@@ -514,42 +514,41 @@ class _LoginScreenState extends State<LoginScreen> {
                                     SignInWithAppleButton(
                                       text: "Se connecter avec Apple",
                                       onPressed: () async {
-                                        // 1. Lance le chargement
                                         setState(() => _isLoading = true);
-
                                         try {
                                           final auth = Provider.of<AuthService>(context, listen: false);
-
-                                          // 2. Appelle le service (qui fait tout le boulot)
                                           bool success = await auth.signInWithApple();
 
-                                          // 3. Arrête le chargement
+                                          // On arrête le chargement visuel
                                           if (mounted) setState(() => _isLoading = false);
 
-                                          // 4. SI C'EST BON : ON NAVIGUE ! 🚀
-                                          if (success && mounted) {
+                                          if (success) {
+                                            // ✅ CORRECTION CRUCIALE :
+                                            // On attend 500ms que la fenêtre native Apple se ferme complètement
+                                            // sinon la navigation Flutter échoue silencieusement.
+                                            await Future.delayed(const Duration(milliseconds: 500));
 
-                                            // Petit message de succès (comme Google)
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              SnackBar(
-                                                content: Row(
-                                                  children: const [
-                                                    Icon(Icons.check_circle, color: Colors.white),
-                                                    SizedBox(width: 12),
-                                                    Text("Connexion Apple réussie", style: TextStyle(fontWeight: FontWeight.bold)),
-                                                  ],
+                                            if (mounted) {
+                                              // Petit message de succès
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Row(
+                                                    children: const [
+                                                      Icon(Icons.check_circle, color: Colors.white),
+                                                      SizedBox(width: 12),
+                                                      Text("Connexion Apple réussie", style: TextStyle(fontWeight: FontWeight.w600)),
+                                                    ],
+                                                  ),
+                                                  backgroundColor: Colors.green,
+                                                  behavior: SnackBarBehavior.floating,
+                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                                 ),
-                                                backgroundColor: Colors.green,
-                                                behavior: SnackBarBehavior.floating,
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                              ),
-                                            );
+                                              );
 
-                                            // LA LIGNE QUI MANQUAIT : Redirection vers le Dashboard
-                                            Navigator.pushReplacementNamed(context, '/dashboard');
-
+                                              // Redirection vers le Dashboard
+                                              Navigator.pushReplacementNamed(context, '/dashboard');
+                                            }
                                           } else if (mounted) {
-                                            // Si ça échoue (mais pas d'erreur crash)
                                             ScaffoldMessenger.of(context).showSnackBar(
                                               const SnackBar(
                                                 content: Text("Échec de la connexion Apple."),
@@ -558,14 +557,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                             );
                                           }
                                         } catch (e) {
-                                          print("Erreur UI Apple: $e");
+                                          print("Erreur Apple Sign In: $e");
                                         } finally {
-                                          // Sécurité pour être sûr que le loader part
                                           if (mounted && _isLoading) setState(() => _isLoading = false);
                                         }
                                       },
                                       height: 50,
-
                                       style: SignInWithAppleButtonStyle.black,
                                       borderRadius: const BorderRadius.all(Radius.circular(12)),
                                     ).animate().fadeIn(delay: 1000.ms).slideY(begin: 0.2),
