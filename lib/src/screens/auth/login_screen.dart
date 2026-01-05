@@ -514,52 +514,67 @@ class _LoginScreenState extends State<LoginScreen> {
                                     SignInWithAppleButton(
                                       text: "Se connecter avec Apple",
                                       onPressed: () async {
+                                        // 1. Lance le chargement
                                         setState(() => _isLoading = true);
+
                                         try {
+                                          // On récupère auth AVANT les opérations async pour être sûr
                                           final auth = Provider.of<AuthService>(context, listen: false);
+
+                                          // 2. Appel async
                                           bool success = await auth.signInWithApple();
 
-                                          // On arrête le chargement visuel
+                                          // 3. Arrêt du chargement (vérification mounted)
                                           if (mounted) setState(() => _isLoading = false);
 
+                                          // 4. Gestion du succès
                                           if (success) {
-                                            // ✅ CORRECTION CRUCIALE :
-                                            // On attend 500ms que la fenêtre native Apple se ferme complètement
-                                            // sinon la navigation Flutter échoue silencieusement.
+
+                                            // Pause pour laisser la fenêtre Apple se fermer
                                             await Future.delayed(const Duration(milliseconds: 500));
 
-                                            if (mounted) {
-                                              // Petit message de succès
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                SnackBar(
-                                                  content: Row(
-                                                    children: const [
-                                                      Icon(Icons.check_circle, color: Colors.white),
-                                                      SizedBox(width: 12),
-                                                      Text("Connexion Apple réussie", style: TextStyle(fontWeight: FontWeight.w600)),
-                                                    ],
-                                                  ),
-                                                  backgroundColor: Colors.green,
-                                                  behavior: SnackBarBehavior.floating,
-                                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                                ),
-                                              );
+                                            // 🚨 CORRECTION CRUCIALE ICI 🚨
+                                            // On revérifie si l'écran est toujours là après la pause.
+                                            // S'il n'est plus là, on arrête tout (return) pour éviter le crash.
+                                            if (!mounted) return;
 
-                                              // Redirection vers le Dashboard
-                                              Navigator.pushReplacementNamed(context, '/dashboard');
-                                            }
-                                          } else if (mounted) {
+                                            // Maintenant, on peut utiliser 'context' en toute sécurité
                                             ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(
-                                                content: Text("Échec de la connexion Apple."),
-                                                backgroundColor: Colors.red,
+                                              SnackBar(
+                                                content: Row(
+                                                  children: const [
+                                                    Icon(Icons.check_circle, color: Colors.white),
+                                                    SizedBox(width: 12),
+                                                    Text("Connexion Apple réussie", style: TextStyle(fontWeight: FontWeight.w600)),
+                                                  ],
+                                                ),
+                                                backgroundColor: Colors.green,
+                                                behavior: SnackBarBehavior.floating,
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                               ),
                                             );
+
+                                            Navigator.pushReplacementNamed(context, '/dashboard');
+
+                                          } else {
+                                            // Gestion de l'échec
+                                            if (mounted) {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text("Échec de la connexion Apple."),
+                                                  backgroundColor: Colors.red,
+                                                ),
+                                              );
+                                            }
                                           }
                                         } catch (e) {
+
                                           print("Erreur Apple Sign In: $e");
                                         } finally {
-                                          if (mounted && _isLoading) setState(() => _isLoading = false);
+                                          // Sécurité finale pour le loader
+                                          if (mounted && _isLoading) {
+                                            setState(() => _isLoading = false);
+                                          }
                                         }
                                       },
                                       height: 50,
