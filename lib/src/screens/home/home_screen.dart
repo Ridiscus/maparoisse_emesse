@@ -517,7 +517,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
 
-// --- L'ÉTIQUETTE STYLÉE (BADGE) ---
+       // --- L'ÉTIQUETTE STYLÉE (BADGE) ---
         Positioned(
           top: 0,
           right: 0,
@@ -1319,11 +1319,11 @@ class _StatusListModal extends StatelessWidget {
               width: 40,
               height: 5,
               margin: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
+              //decoration: BoxDecoration(
                 // ✅ CORRECTION 2 : Couleur de la poignée adaptée (Gris clair ou fonce)
-                color: Theme.of(context).dividerColor,
-                borderRadius: BorderRadius.circular(10),
-              ),
+                //color: Theme.of(context).dividerColor,
+                //  borderRadius: BorderRadius.circular(10),
+                // ),
             ),
             // Titre
             Padding(

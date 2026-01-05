@@ -9,6 +9,8 @@ import '../../app_themes.dart';
 // Importe ton widget de champ texte personnalisé si tu l'utilises
 import '../widgets/custom_text_field.dart';
 
+
+
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
 
@@ -274,7 +276,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
               const SizedBox(height: 30),
 
-// --- Champ Nom Complet ---
+             // --- Champ Nom Complet ---
               TextFormField(
                 controller: _nameController,
                 decoration: _buildInputDecoration(label: l10n.editProfileNameLabel, icon: Icons.person_outline),

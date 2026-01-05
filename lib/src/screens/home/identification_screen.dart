@@ -352,6 +352,7 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
             nomMouvement: _mouvementCtrl.text,
             estBaptise: _isBaptise,
             dateBapteme: dateBaptemeFormatted,
+            nomParoisseBapteme: _isBaptise ? _paroisseBaptemeCtrl.text : "",
             photo: _imageFile,
           );
 

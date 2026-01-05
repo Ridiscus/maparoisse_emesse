@@ -74,6 +74,14 @@ class AuthService extends ChangeNotifier {
   // 'get password' est supprimé
 
 
+  static const String _keyGoogleId = "google_id";
+  static const String _keyAppleId = "apple_id";
+
+
+  String? _googleId;
+  String? _appleId;
+
+
   // Getter pour savoir si l'utilisateur est baptisé
   bool get isBaptized => _estBaptise;
 
@@ -103,18 +111,13 @@ class AuthService extends ChangeNotifier {
 
 
 
-  // ✅ GETTER INTELLIGENT : Détecte Google OU Apple
-  bool get isSocialUser {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return false;
 
-    for (var userInfo in user.providerData) {
-      // On vérifie si le fournisseur est Google ou Apple
-      if (userInfo.providerId == 'google.com' || userInfo.providerId == 'apple.com') {
-        return true;
-      }
-    }
-    return false; // C'est un utilisateur Email/Mdp classique
+
+  // ✅ NOUVEAU GETTER : Basé sur les données de ton Backend
+  bool get isSocialUser {
+    // Si l'utilisateur a un ID Google OU un ID Apple stocké, c'est un social user.
+    return (_googleId != null && _googleId!.isNotEmpty) ||
+        (_appleId != null && _appleId!.isNotEmpty);
   }
 
 
@@ -131,6 +134,12 @@ class AuthService extends ChangeNotifier {
     }
 
     _token = storedToken; // Charge le token en mémoire
+
+
+    // --- AJOUT : Rechargement des IDs Sociaux ---
+    _googleId = prefs.getString(_keyGoogleId);
+    _appleId = prefs.getString(_keyAppleId);
+    // -------------------------------------------
 
     // Tente de valider le token en récupérant les infos utilisateur
     try {
@@ -430,6 +439,10 @@ class AuthService extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear(); // Efface tout pour être sûr
 
+    // ... tes resets de variables ...
+    _googleId = null; // <-- AJOUT
+    _appleId = null;  // <-- AJOUT
+
 
     // --- AJOUT : Supprime le token localement sur l'appareil ---
     await _notificationService.handleLogout();
@@ -468,7 +481,17 @@ class AuthService extends ChangeNotifier {
     await prefs.setString(_keyEmail, user['email']);
     await prefs.setString(_keyPhone, user['contact']);
 
+    // --- AJOUT : Sauvegarde des IDs Sociaux ---
+    String? gId = user['google_id']?.toString();
+    String? aId = user['apple_id']?.toString();
 
+    if (gId != null) await prefs.setString(_keyGoogleId, gId);
+    if (aId != null) await prefs.setString(_keyAppleId, aId);
+
+    // Mise à jour des variables locales
+    _googleId = gId;
+    _appleId = aId;
+    // ------------------------------------------
 
 
     // 1. On récupère la valeur qui est DÉJÀ stockée dans le téléphone
