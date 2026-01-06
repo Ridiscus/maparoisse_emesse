@@ -77,6 +77,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   iconsax: ^0.0.8
   in_app_update: ^4.2.5
+  upgrader: ^10.3.0
 
 dev_dependencies:
   flutter_test:

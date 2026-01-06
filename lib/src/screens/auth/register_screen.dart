@@ -14,6 +14,10 @@ import 'package:maparoisse/src/widgets/loader_widget.dart';
 import 'package:flutter/services.dart'; // Pour contrôler le système
 
 
+import 'package:google_sign_in/google_sign_in.dart'; // Pour Google
+import 'package:sign_in_with_apple/sign_in_with_apple.dart'; // Pour Apple
+import 'dart:io'; // Pour Platform
+
 // Définition de notre palette de couleurs pour plus de clarté
 const Color _primaryColor = Color(0xFFC0A040); // Ocre Lumineux
 const Color _secondaryColor = Color(0xFFC0A040); // Bleu Ciel
@@ -37,6 +41,10 @@ class _RegisterScreenState extends State<RegisterScreen>
 
   int _currentStep = 0;
   bool _isLoading = false;
+
+  final GoogleSignIn _googleSignIn = GoogleSignIn(); // Instance Google
+  bool _isGoogleLoading = false; // État chargement Google
+
 
 
   String? _civilite;
@@ -180,22 +188,7 @@ class _RegisterScreenState extends State<RegisterScreen>
     return null;
   }
 
-  Future<void> _pickImage() async {
-    final l10n = AppLocalizations.of(context)!;
-    try {
-      final picked = await _picker.pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 80,
-        maxWidth: 800,
-        maxHeight: 800,
-      );
-      if (picked != null) {
-        setState(() => _imageFile = File(picked.path));
-      }
-    } catch (e) {
-      _showError(l10n.errImagePick);
-    }
-  }
+
 
   void _nextStep() {
     final l10n = AppLocalizations.of(context)!;
@@ -227,6 +220,110 @@ class _RegisterScreenState extends State<RegisterScreen>
       _stepAnimationController.forward();
     }
   }
+
+
+
+
+
+  // 📸 NOUVEAU : Menu de sélection Caméra / Galerie
+  void _showImageSourceSelection() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent, // Pour le style arrondi
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardTheme.color,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("Choisir une photo", style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                // Option Caméra
+                _buildSourceOption(
+                  icon: Icons.camera_alt_outlined,
+                  label: "Caméra",
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _pickImage(ImageSource.camera); // Appel avec source Caméra
+                  },
+                ),
+                // Option Galerie
+                _buildSourceOption(
+                  icon: Icons.photo_library_outlined,
+                  label: "Galerie",
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    _pickImage(ImageSource.gallery); // Appel avec source Galerie
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Widget helper pour les boutons du modal photo
+  Widget _buildSourceOption({required IconData icon, required String label, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: 100,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Theme.of(context).dividerColor),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 32, color: const Color(0xFFC0A040)),
+            const SizedBox(height: 8),
+            Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 📸 MODIFIÉ : Accepte maintenant la source (Caméra ou Galerie)
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final picked = await _picker.pickImage(
+        source: source, // Utilise la source passée en paramètre
+        imageQuality: 80,
+        maxWidth: 800,
+        maxHeight: 800,
+      );
+      if (picked != null) {
+        setState(() => _imageFile = File(picked.path));
+      }
+    } catch (e) {
+      _showError("Impossible d'accéder à l'image. Vérifiez les permissions.");
+    }
+  }
+
+
+
+  // ---------------------------------------------------------
+  // 🌐 LOGIQUE SOCIALE (Google / Apple) - Identique au Login
+  // ---------------------------------------------------------
+
+
+
+
+
+
+
 
 
   Future<void> _submitRegistration() async {
@@ -518,10 +615,182 @@ class _RegisterScreenState extends State<RegisterScreen>
   }
 
 
+
+  Future<void> _handleGoogleSignUp() async {
+    final l10n = AppLocalizations.of(context)!;
+
+    if (_isLoading || _isGoogleLoading) return;
+
+    setState(() => _isGoogleLoading = true);
+
+    try {
+      // Force la déconnexion pour choisir le compte
+      await _googleSignIn.signOut();
+
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        setState(() => _isGoogleLoading = false);
+        return;
+      }
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final String? idToken = googleAuth.idToken;
+
+      if (idToken == null) {
+        _showError(l10n.loginErrorGoogleToken);
+        await _googleSignIn.signOut();
+        setState(() => _isGoogleLoading = false);
+        return;
+      }
+
+      final authService = Provider.of<AuthService>(context, listen: false);
+
+      // Appel API (Création ou Connexion automatique)
+      bool success = await authService.loginWithGoogle(
+          idToken,
+          googleUser.email,
+          googleUser.displayName,
+          googleUser.id,
+          googleUser.photoUrl
+      );
+
+      if (!mounted) return;
+
+      if (success) {
+        // --- SUCCÈS ---
+        final double screenHeight = MediaQuery.of(context).size.height;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    "Inscription Google réussie !", // Texte adapté
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: AppTheme.successColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            margin: EdgeInsets.only(bottom: screenHeight - 135, left: 20, right: 20),
+          ),
+        );
+
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (mounted) {
+          // ✅ NOUVELLE LOGIQUE DE REDIRECTION INTELLIGENTE
+          final currentUser = authService; // Raccourci vers ton provider
+
+          // On vérifie si les infos vitales manquent
+          // Note: Google ne donne jamais le téléphone, donc ce sera souvent vrai la 1ère fois
+          bool missingInfo = (currentUser.phone == null || currentUser.phone!.isEmpty)
+          ||  (currentUser.civilite == null || currentUser.civilite!.isEmpty);
+
+          if (missingInfo) {
+            print("Profil incomplet -> Redirection vers CompleteProfile");
+            Navigator.pushReplacementNamed(context, '/complete_profile');
+          } else {
+            print("Profil complet -> Redirection vers Dashboard");
+            Navigator.pushReplacementNamed(context, '/dashboard');
+          }
+        }
+      } else {
+        _showError("Échec de l'inscription Google.");
+        await _googleSignIn.signOut();
+      }
+
+    } catch (error) {
+      print('Erreur Google Sign Up: $error');
+      if (mounted) _showError(l10n.loginErrorGoogleGeneric);
+      await _googleSignIn.signOut();
+    } finally {
+      if (mounted) setState(() => _isGoogleLoading = false);
+    }
+  }
+
+  // ------------------------------------------------------------------------
+  // 2. GESTION APPLE (COPIE EXACTE DU LOGIN ADAPTÉE)
+  // ------------------------------------------------------------------------
+  Future<void> _handleAppleSignUp() async {
+    if (_isLoading) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final auth = Provider.of<AuthService>(context, listen: false);
+
+      // Appel AuthService
+      bool success = await auth.signInWithApple();
+
+      if (mounted) setState(() => _isLoading = false);
+
+      if (success) {
+        // Pause technique pour iOS (Indispensable pour éviter le crash de nav)
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        if (!mounted) return;
+
+        // --- SUCCÈS VISUEL ---
+        final double screenHeight = MediaQuery.of(context).size.height;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: const [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 12),
+                Text("Inscription Apple réussie", style: TextStyle(fontWeight: FontWeight.w600)),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            margin: EdgeInsets.only(bottom: screenHeight - 135, left: 20, right: 20),
+          ),
+        );
+
+        // --- LOGIQUE DE REDIRECTION INTELLIGENTE ---
+        // On utilise 'auth' (défini au début) pour vérifier les infos
+
+        // Est-ce qu'il manque le téléphone OU la civilité ?
+        bool missingInfo = (auth.phone == null || auth.phone!.isEmpty)
+         || (auth.civilite == null || auth.civilite!.isEmpty);
+
+        if (missingInfo) {
+          print("Profil incomplet (Apple) -> Redirection vers CompleteProfile");
+          Navigator.pushReplacementNamed(context, '/complete_profile');
+        } else {
+          print("Profil complet (Apple) -> Redirection vers Dashboard");
+          Navigator.pushReplacementNamed(context, '/dashboard');
+        }
+
+      } else {
+        // Échec silencieux (Annulation utilisateur)
+      }
+    } catch (e) {
+      print("Erreur Apple Sign Up: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Erreur lors de la connexion Apple."), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted && _isLoading) setState(() => _isLoading = false);
+    }
+  }
+
+
+
+
   Widget _buildPersonalInfoStep() {
     final theme = Theme.of(context);
     const Color primaryColor = Color(0xFFC0A040);
-
     final l10n = AppLocalizations.of(context)!;
 
     return SingleChildScrollView(
@@ -585,39 +854,94 @@ class _RegisterScreenState extends State<RegisterScreen>
 
             const SizedBox(height: 24),
 
+            // ... (Section Civilité inchangée) ...
+            // ... (Bloc ModernCard avec les champs Nom, User, Email, Tel inchangé) ...
             ModernCard(
-              // Si ModernCard n'a pas de fond par défaut, ajoute :
               backgroundColor: theme.cardTheme.color,
               child: Column(
                 children: [
-                  // Tes CustomTextFields devraient déjà être corrigés via le thème global
-                  CustomTextField(
-                    controller: _nameCtrl,
-                    focusNode: _nameFocus,
-                    label: l10n.registerLabelFullName,
-                    hint: l10n.registerHintFullName,
-                    prefixIcon: Icons.person_outline,
-                    validator: _validateName,
-                    textInputAction: TextInputAction.next,
-                    onSubmitted: (_) => _userFocus.requestFocus(),
-
-                  ).animate().fadeIn(duration: 600.ms, delay: 300.ms).slideX(begin: -0.3, duration: 600.ms, delay: 300.ms),
-                  // ... (Les autres champs sont identiques) ...
+                  CustomTextField(controller: _nameCtrl, focusNode: _nameFocus, label: l10n.registerLabelFullName, hint: l10n.registerHintFullName, prefixIcon: Icons.person_outline, validator: _validateName, textInputAction: TextInputAction.next, onSubmitted: (_) => _userFocus.requestFocus()),
                   const SizedBox(height: 20),
-                  CustomTextField(controller: _userCtrl, focusNode: _userFocus, label: l10n.registerLabelUsername, hint: l10n.registerHintUsername, prefixIcon: Icons.alternate_email, validator: _validateUsername, textInputAction: TextInputAction.next, onSubmitted: (_) => _emailFocus.requestFocus()).animate().fadeIn(duration: 600.ms, delay: 400.ms).slideX(begin: -0.3, duration: 600.ms, delay: 400.ms),
+                  CustomTextField(controller: _userCtrl, focusNode: _userFocus, label: l10n.registerLabelUsername, hint: l10n.registerHintUsername, prefixIcon: Icons.alternate_email, validator: _validateUsername, textInputAction: TextInputAction.next, onSubmitted: (_) => _emailFocus.requestFocus()),
                   const SizedBox(height: 20),
-                  CustomTextField(controller: _emailCtrl, focusNode: _emailFocus, label: l10n.registerLabelEmail, hint: l10n.registerHintEmail, prefixIcon: Icons.email_outlined, validator: _validateEmail, keyboardType: TextInputType.emailAddress, textInputAction: TextInputAction.next, onSubmitted: (_) => _phoneFocus.requestFocus()).animate().fadeIn(duration: 600.ms, delay: 500.ms).slideX(begin: -0.3, duration: 600.ms, delay: 500.ms),
+                  CustomTextField(controller: _emailCtrl, focusNode: _emailFocus, label: l10n.registerLabelEmail, hint: l10n.registerHintEmail, prefixIcon: Icons.email_outlined, validator: _validateEmail, keyboardType: TextInputType.emailAddress, textInputAction: TextInputAction.next, onSubmitted: (_) => _phoneFocus.requestFocus()),
                   const SizedBox(height: 20),
-                  CustomTextField(controller: _phoneCtrl, focusNode: _phoneFocus, label: l10n.registerLabelPhone, hint: l10n.registerHintPhone, prefixIcon: Icons.phone_outlined, validator: _validatePhone, keyboardType: TextInputType.phone, textInputAction: TextInputAction.done).animate().fadeIn(duration: 600.ms, delay: 600.ms).slideX(begin: -0.3, duration: 600.ms, delay: 600.ms),
+                  CustomTextField(controller: _phoneCtrl, focusNode: _phoneFocus, label: l10n.registerLabelPhone, hint: l10n.registerHintPhone, prefixIcon: Icons.phone_outlined, validator: _validatePhone, keyboardType: TextInputType.phone, textInputAction: TextInputAction.done),
                 ],
               ),
             ),
+
+            const SizedBox(height: 30),
+
+            // ✅ NOUVEAU : SÉPARATEUR
+            Row(
+              children: [
+                Expanded(child: Divider(color: theme.dividerColor)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text("Ou s'inscrire avec", style: GoogleFonts.inter(color: theme.hintColor, fontSize: 13, fontWeight: FontWeight.w500)),
+                ),
+                Expanded(child: Divider(color: theme.dividerColor)),
+              ],
+            ).animate().fadeIn(delay: 700.ms),
+
+            const SizedBox(height: 20),
+
+            // ✅ NOUVEAU : BOUTON GOOGLE (Style Login)
+            ElevatedButton(
+              onPressed: _isGoogleLoading || _isLoading ? null : _handleGoogleSignUp,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: Colors.black87,
+                elevation: 1,
+                minimumSize: const Size(double.infinity, 50),
+                shape: RoundedRectangleBorder(
+
+                  borderRadius: BorderRadius.circular(12),
+                  side: const BorderSide(color: Colors.black12),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset('assets/images/google-logo.png', height: 24),
+                  const SizedBox(width: 12),
+                  const Text("S'inscrire avec Google", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, fontFamily: '-apple-system')),
+                ],
+              ),
+            ).animate().fadeIn(delay: 800.ms).slideY(begin: 0.2),
+
+            // ✅ CORRECTION DU BOUTON APPLE
+            // ✅ CORRECTION DÉFINITIVE DU BOUTON APPLE
+            if (Platform.isIOS) ...[
+              const SizedBox(height: 16),
+              SignInWithAppleButton(
+                text: "S'inscrire avec Apple",
+
+                // 👇 ON NE MET PAS 'null', ON VÉRIFIE À L'INTÉRIEUR
+                onPressed: () {
+                  if (!_isLoading) {
+                    _handleAppleSignUp();
+                  }
+                },
+
+                height: 50,
+                style: SignInWithAppleButtonStyle.black,
+                borderRadius: const BorderRadius.all(Radius.circular(12)),
+              ).animate().fadeIn(delay: 900.ms).slideY(begin: 0.2),
+            ],
+
             const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
+
+
+
+
+
 
 
   Widget _buildSecurityStep() {
@@ -796,7 +1120,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                 child: Column(
                   children: [
                     GestureDetector(
-                      onTap: _pickImage,
+                      onTap: _showImageSourceSelection,
                       child: Container(
                         width: 120,
                         height: 120,
@@ -846,7 +1170,7 @@ class _RegisterScreenState extends State<RegisterScreen>
                           side: const BorderSide(color: _primaryColor, width: 1.5),
                         ),
                       ),
-                      onPressed: _pickImage,
+                      onPressed: _showImageSourceSelection,
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [

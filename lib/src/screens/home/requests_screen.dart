@@ -367,7 +367,9 @@ class _RequestsScreenState extends State<RequestsScreen>
 
 
 
-  /// MODIFIÉ : Validation
+
+
+  /// MODIFIÉ : Validation avec vérification du montant
   bool _validateCurrentStep() {
     switch (_currentStep) {
       case 0: // Intention
@@ -378,7 +380,7 @@ class _RequestsScreenState extends State<RequestsScreen>
         return true;
 
       case 1: // Détails messe
-      // VÉRIFIE L'ID
+      // 1. Vérifications des champs obligatoires
         if (_paroisseId == null) {
           _showError('Veuillez sélectionner une paroisse.');
           return false;
@@ -403,6 +405,18 @@ class _RequestsScreenState extends State<RequestsScreen>
           _showError('Veuillez sélectionner une heure pour la messe.');
           return false;
         }
+
+        // ✅ AJOUT : VÉRIFICATION DU MONTANT
+        // Le montant doit être strictement supérieur ou égal à 100 FCFA
+        if (_montantTotal < 100) {
+          if (_montantTotal == 0) {
+            _showError('Le montant total est de 0 FCFA. Impossible de poursuivre.');
+          } else {
+            _showError('Le montant minimum requis est de 100 FCFA.');
+          }
+          return false; // BLOQUE LE PASSAGE À L'ÉTAPE SUIVANTE
+        }
+
         return true;
 
       default:
@@ -805,502 +819,509 @@ class _RequestsScreenState extends State<RequestsScreen>
   }
 
 
+  /// NOUVEAU : Gère le "Pull to Refresh"
+  Future<void> _handleRefresh() async {
+    // 1. Recharge les données des paroisses et favoris
+    await _loadParishData();
 
-  // --- WIDGET POUR L'ÉTAPE 1 (CORRIGÉ MODE SOMBRE) ---
+    // 2. (Optionnel) Tu peux aussi rafraîchir le statut favori si une paroisse est sélectionnée
+    if (_paroisseId != null) {
+      await _updateFavoriteStatus();
+    }
+
+    // Petite pause pour l'UX (pour voir le rond tourner un peu)
+    await Future.delayed(const Duration(milliseconds: 500));
+  }
+
+
+
+  // --- WIDGET POUR L'ÉTAPE 1 (CORRIGÉ AVEC REFRESH) ---
   Widget _buildMotifStep() {
-    final theme = Theme.of(context); // Raccourci thème
+    final theme = Theme.of(context);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Motif de la demande',
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              // ✅ CORRECTION : Texte blanc en mode sombre
-              color: theme.colorScheme.onSurface,
-            ),
-          ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.3, duration: 600.ms),
+    // ✅ 1. Envelopper avec RefreshIndicator
+    return RefreshIndicator(
+      onRefresh: _handleRefresh,
+      color: AppTheme.primaryColor, // Couleur Ocre
+      backgroundColor: theme.cardTheme.color, // Fond adapté au mode
 
-          const SizedBox(height: 8),
+      child: SingleChildScrollView(
+        // ✅ 2. AJOUTER LA PHYSIQUE OBLIGATOIRE
+        // Permet de "tirer" l'écran même s'il y a peu de contenu
+        physics: const AlwaysScrollableScrollPhysics(),
 
-          Text(
-            'Intention: $_intention',
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: AppTheme.primaryColor, // L'ocre reste visible dans les deux modes
-              fontWeight: FontWeight.bold,
-            ),
-          ).animate().fadeIn(duration: 600.ms, delay: 200.ms),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ... (Tout le reste de ton code reste identique) ...
+            Text(
+              'Motif de la demande',
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface,
+              ),
+            ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.3, duration: 600.ms),
 
-          const SizedBox(height: 32),
+            const SizedBox(height: 8),
 
-          // Champ Motif
-          // Note: Si ton CustomTextField est bien codé, il devrait prendre
-          // les couleurs du thème inputDecorationTheme défini dans AppTheme.
-          // Sinon, on force ici via un Theme wrapper local ou des propriétés.
-          CustomTextField(
-            controller: _motifCtrl,
-            label: 'Motif détaillé *',
-            hint: 'Décrivez pourquoi vous demandez l\'aide...',
-            maxLines: 5,
-            // Assure-toi que ton CustomTextField utilise ces styles à l'intérieur
-            // Si CustomTextField n'accepte pas de style, dis-le moi.
-          ).animate().fadeIn(
-            duration: 600.ms,
-            delay: 400.ms,
-          ).slideY(
-            begin: 0.3,
-            duration: 600.ms,
-            delay: 400.ms,
-            curve: Curves.easeOut,
-          ),
+            Text(
+              'Intention: $_intention',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: AppTheme.primaryColor,
+                fontWeight: FontWeight.bold,
+              ),
+            ).animate().fadeIn(duration: 600.ms, delay: 200.ms),
 
-          const SizedBox(height: 32),
+            const SizedBox(height: 32),
 
-          // Champ Intercesseur
-          CustomTextField(
-            controller: _intercesseurCtrl,
-            label: 'Par l\'intercession de (optionnel)',
-            hint: 'Ex: La Vierge Marie, Saint Joseph...',
-            prefixIcon: Icons.person_search,
-          ).animate().fadeIn(delay: 600.ms),
-        ],
+            CustomTextField(
+              controller: _motifCtrl,
+              label: 'Motif détaillé *',
+              hint: 'Décrivez pourquoi vous demandez l\'aide...',
+              maxLines: 5,
+            ).animate().fadeIn(duration: 600.ms, delay: 400.ms).slideY(begin: 0.3, duration: 600.ms),
+
+            const SizedBox(height: 32),
+
+            CustomTextField(
+              controller: _intercesseurCtrl,
+              label: 'Par l\'intercession de (optionnel)',
+              hint: 'Ex: La Vierge Marie, Saint Joseph...',
+              prefixIcon: Icons.person_search,
+            ).animate().fadeIn(delay: 600.ms),
+
+            // ✅ 3. AJOUTER UN ESPACE EN BAS (Pour éviter que le bouton flottant ne cache le texte)
+            const SizedBox(height: 100),
+          ],
+        ),
       ),
     );
   }
 
 
-
-  // --- 3. MODIFICATION : Mise à jour de l'interface ---
+  // --- 3. MODIFICATION : Mise à jour de l'interface (Détails Messe) ---
   Widget _buildMassDetailsStep() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Détails de la messe',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)
-          ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.3, duration: 600.ms),
-          const SizedBox(height: 32),
+    final theme = Theme.of(context);
 
-          // --- Bouton GPS (DÉSACIVÉ) ---
-          PrimaryButton(
-            text: 'Suggérer la paroisse la plus proche',
-            onPressed: null, // DÉSACIVÉ
-            // isLoading: _isSearchingLocation,
-            icon: Icons.location_disabled, // Icône changée
-          ),
-          const SizedBox(height: 4),
-          const Center(child: Text("Fonctionnalité GPS indisponible (API)", style: TextStyle(color: Colors.grey))),
-          // --- Fin GPS ---
+    // ✅ 1. ENVELOPPER DANS REFRESH INDICATOR
+    return RefreshIndicator(
+      onRefresh: _handleRefresh,
+      color: AppTheme.primaryColor,
+      backgroundColor: theme.cardTheme.color,
 
-          const SizedBox(height: 16),
+      child: SingleChildScrollView(
+        // ✅ 2. PHYSIQUE DE SCROLL OBLIGATOIRE
+        // Permet de rafraîchir même si le contenu est court
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(24),
 
-          Row(
-            children: [
-              const Expanded(child: Divider()),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Text("OU", style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),)),
-              ),
-              const Expanded(child: Divider()),
-            ],
-          ),
-          const SizedBox(height: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Détails de la messe',
+                style: theme.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)
+            ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.3, duration: 600.ms),
+            const SizedBox(height: 32),
 
-          // Bouton Favoris (MODIFIÉ pour appeler la nouvelle fonction)
-          OutlinedButton.icon(
-            icon: const Icon(Icons.star),
-            label: const Text('Choisir parmi mes favoris'),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(double.infinity, 50),
-              foregroundColor: AppTheme.primaryColor,
+            // --- Bouton GPS (DÉSACIVÉ) ---
+            PrimaryButton(
+              text: 'Suggérer la paroisse la plus proche',
+              onPressed: null, // DÉSACIVÉ
+              icon: Icons.location_disabled,
             ),
-            onPressed: _showFavoritesDialog, // Appelle la fonction API
-          ),
+            const SizedBox(height: 4),
+            const Center(child: Text("Fonctionnalité GPS indisponible (API)", style: TextStyle(color: Colors.grey))),
 
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
 
-          Row(
-            children: [
-              const Expanded(child: Divider()),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Text("OU", style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),)),
-              ),
-              const Expanded(child: Divider()),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-
-          Text(
-            'Lancer une Recherche manuelle',
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // --- SÉLECTEUR DE VILLE (Dynamique) ---
-          DropdownButtonFormField<String>(
-            isExpanded: true,
-            decoration: InputDecoration(
-              hintText: 'Choisissez une ville',
-              // ✅ Couleur de fond dynamique
-              filled: true,
-              fillColor: Theme.of(context).inputDecorationTheme.fillColor,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-            ),
-            // ✅ Style de l'item sélectionné
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-            dropdownColor: Theme.of(context).cardTheme.color, // Fond du menu déroulant
-            value: _ville,  items: _villes.map((v) => DropdownMenuItem<String>(value: v, child: Text(v))).toList(),
-            onChanged: (val) {
-              if (val == null) return;
-              setState(() {
-                _ville = val;
-                // Filtre les communes pour cette ville
-                _communesFiltrees = _allParishes
-                    .where((p) => p['ville'] == _ville)
-                    .map((p) => p['commune'] as String)
-                    .toSet() // Uniques
-                    .toList()..sort();
-
-                _commune = null;
-                _paroissesFiltrees = [];
-                _paroisseId = null;
-                _paroisseName = null;
-                _montantUnitaire = 0;
-                _calculerMontant();
-              });
-            },
-          ),
-
-          const SizedBox(height: 24),
-
-          // --- SÉLECTEUR DE COMMUNE (Dynamique) ---
-          DropdownButtonFormField<String>(
-            decoration: InputDecoration(
-                hintText: _ville == null ? 'Choisissez d\'abord une ville' : 'Choisissez une commune',
-              filled: true,
-              fillColor: Theme.of(context).inputDecorationTheme.fillColor,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-            ),
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-            dropdownColor: Theme.of(context).cardTheme.color,
-            value: _commune,
-            items: _communesFiltrees.map((c) => DropdownMenuItem<String>(value: c, child: Text(c))).toList(),
-            onChanged: _ville == null ? null : (val) {
-              if (val == null) return;
-              setState(() {
-                _commune = val;
-                // Filtre les paroisses
-                _paroissesFiltrees = _allParishes
-                    .where((p) => p['ville'] == _ville && p['commune'] == _commune)
-                    .toList();
-
-                _paroisseId = null;
-                _paroisseName = null;
-                _montantUnitaire = 0;
-                _calculerMontant();
-              });
-            },
-          ),
-          const SizedBox(height: 24),
-
-          // --- SÉLECTEUR DE PAROISSE (Dynamique) ---
-          Text('Paroisse', style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: DropdownButtonFormField<int>( // <-- MODIFIÉ : Utilise l'ID (int)
-                  isExpanded: true,
-                  decoration: InputDecoration(
-                    hintText: _commune == null ? 'Choisissez d\'abord une commune' : 'Choisissez une paroisse',
-                    // ... (styles) …
-                    filled: true,
-                    fillColor: Theme.of(context).inputDecorationTheme.fillColor,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
-                    ),
-                  ),
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-                  dropdownColor: Theme.of(context).cardTheme.color,
-                  value: _paroisseId, // Utilise l'ID
-                  items: _paroissesFiltrees.map((p) => DropdownMenuItem<int>(
-                      value: p['id'] as int,
-                      child: Text(p['name'] as String, overflow: TextOverflow.ellipsis)
-                  )).toList(),
-                  onChanged: _commune == null ? null : (val) {
-                    if (val == null) return;
-                    // On cherche la paroisse complète
-                    final paroisseData = _paroissesFiltrees.firstWhere((p) => p['id'] == val);
-                    // On utilise la fonction helper
-                    _onParishSelected(paroisseData);
-                  },
+            Row(
+              children: [
+                const Expanded(child: Divider()),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text("OU", style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6))),
                 ),
-              ),
-              const SizedBox(width: 8),
-              // --- Bouton Favori (MODIFIÉ) ---
-              IconButton(
-                icon: Icon(_isCurrentParishFavorite ? Icons.star : Icons.star_border, color: _isCurrentParishFavorite ? AppTheme.warningColor : AppTheme.textSecondary, size: 30),
-                onPressed: (_paroisseId == null) ? null : () async {
-
-                  bool success = await _authService.toggleParishFavorite(_paroisseId!);
-                  if (success) {
-                    // Met à jour l'icône
-                    _updateFavoriteStatus();
-                    // Recharge la liste des favoris en arrière-plan
-                    _authService.getFavoriteParishes().then((favs) {
-                      if(mounted) setState(() => _allFavoriteParishes = favs);
-                    });
-                  }
-                },
-              ),
-            ],
-          ),
-
-          // Le reste du formulaire (Date, Heure, Type de célébration, etc.) reste inchangé
-          const SizedBox(height: 24),
-          // ... (votre code pour Date/Heure, Type Célébration, Jours, Dimanches, Montant)
-          // --- MODIFICATION : DATE ET HEURE DÉPLACÉES ICI ---
-          Text(
-            'Date et heure de la messe *',
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w600,
+                const Expanded(child: Divider()),
+              ],
             ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: CustomTextField(
-                  controller: _dateCtrl,
-                  label: 'Date souhaitée',
-                  hint: 'Choisir une date',
-                  prefixIcon: Icons.calendar_today,
-                  readOnly: true,
-                  onTap: () async {
-                    final date = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now().add(const Duration(days: 1)),
-                      firstDate: DateTime.now().add(const Duration(days: 1)),
-                      lastDate: DateTime.now().add(const Duration(days: 365)),
+            const SizedBox(height: 16),
 
-                      // ✅ BUILDER MODIFIÉ POUR LE CURSEUR NOIR
-                      builder: (context, child) {
-                        return Theme(
-                          data: Theme.of(context).copyWith(
-                            colorScheme: Theme.of(context).colorScheme.copyWith(
-                              primary: AppTheme.primaryColor,
-                              onPrimary: Colors.white,
-                              onSurface: Theme.of(context).colorScheme.onSurface,
-                            ),
-                            dialogBackgroundColor: Theme.of(context).cardTheme.color,
-
-                            // 👇 C'EST ICI LA CORRECTION
-                            textSelectionTheme: const TextSelectionThemeData(
-                              cursorColor: Colors.black, // La barre clignotante en Noir
-                              selectionHandleColor: Colors.black, // La goutte d'eau en Noir
-                              selectionColor: Color(0xFFCCCCCC), // La couleur de surbrillance (gris clair)
-                            ),
-                          ),
-                          child: child!,
-                        );
-                      },
-                      // ✅ FIN DU BUILDER
-
-                    );
-                    if (date != null) {
-                      _dateCtrl.text = DateFormat('dd/MM/yyyy').format(date);
-                    }
-                  },
-                ),
+            // Bouton Favoris
+            OutlinedButton.icon(
+              icon: const Icon(Icons.star),
+              label: const Text('Choisir parmi mes favoris'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+                foregroundColor: AppTheme.primaryColor,
               ),
-
-              const SizedBox(width: 12),
-
-              Expanded(
-                child: CustomTextField(
-                  controller: _heureCtrl,
-                  label: 'Heure souhaitée',
-                  hint: 'Choisir une heure',
-                  prefixIcon: Icons.access_time,
-                  readOnly: true,
-                  onTap: () async {
-                    final time = await showTimePicker(
-                      context: context,
-                      initialTime: TimeOfDay.now(),
-                      // ✅ AJOUTE LE MÊME BUILDER ICI AUSSI
-                      // ✅ BUILDER MODIFIÉ
-                      builder: (context, child) {
-                        return Theme(
-                          data: Theme.of(context).copyWith(
-                            colorScheme: Theme.of(context).colorScheme.copyWith(
-                              primary: AppTheme.primaryColor,
-                              onPrimary: Colors.white,
-                              onSurface: Theme.of(context).colorScheme.onSurface,
-                              surface: Theme.of(context).cardTheme.color,
-                            ),
-                            dialogBackgroundColor: Theme.of(context).cardTheme.color,
-
-                            // 👇 C'EST ICI LA CORRECTION
-                            textSelectionTheme: const TextSelectionThemeData(
-                              cursorColor: Colors.black, // Curseur Noir
-                              selectionHandleColor: Colors.black, // Poignée Noire
-                              selectionColor: Color(0xFFCCCCCC), // Surbrillance grise
-                            ),
-                          ),
-                          child: child!,
-                        );
-                      },
-                    );
-                    if (time != null) {
-                      _heureCtrl.text = time.format(context);
-                    }
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // Celebration type
-          Text(
-            'Type de célébration',
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w600,
+              onPressed: _showFavoritesDialog,
             ),
-          ).animate().fadeIn(duration: 600.ms, delay: 500.ms),
 
-          const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
-          ..._celebrationTypes.asMap().entries.map((entry) {
-            final index = entry.key;
-            final type = entry.value;
-            final isSelected = _celebration == type;
+            Row(
+              children: [
+                const Expanded(child: Divider()),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Text("OU", style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6))),
+                ),
+                const Expanded(child: Divider()),
+              ],
+            ),
+            const SizedBox(height: 16),
 
-            return ModernCard(
-              margin: const EdgeInsets.only(bottom: 12),
-              backgroundColor: isSelected ? AppTheme.primaryColor.withOpacity(0.1) : null,
-              borderColor: isSelected ? AppTheme.primaryColor : null,
-              onTap: () {
+            Text(
+              'Lancer une Recherche manuelle',
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // --- SÉLECTEUR DE VILLE ---
+            DropdownButtonFormField<String>(
+              isExpanded: true,
+              decoration: InputDecoration(
+                hintText: 'Choisissez une ville',
+                filled: true,
+                fillColor: theme.inputDecorationTheme.fillColor,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+              style: TextStyle(color: theme.colorScheme.onSurface),
+              dropdownColor: theme.cardTheme.color,
+              value: _ville,
+              items: _villes.map((v) => DropdownMenuItem<String>(value: v, child: Text(v))).toList(),
+              onChanged: (val) {
+                if (val == null) return;
                 setState(() {
-                  _celebration = type;
-                  if (_celebration == 'Messe dominicale') _genererDimanches();
+                  _ville = val;
+                  _communesFiltrees = _allParishes
+                      .where((p) => p['ville'] == _ville)
+                      .map((p) => p['commune'] as String)
+                      .toSet()
+                      .toList()..sort();
+
+                  _commune = null;
+                  _paroissesFiltrees = [];
+                  _paroisseId = null;
+                  _paroisseName = null;
+                  _montantUnitaire = 0;
                   _calculerMontant();
                 });
               },
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? AppTheme.primaryColor
-                          : Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      _getCelebrationIcon(type),
-                      color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                      size: 20,
-                    ),
-                  ),
+            ),
 
-                  const SizedBox(width: 16),
+            const SizedBox(height: 24),
 
-                  Expanded(
-                    child: Text(
-                      type,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: isSelected ? AppTheme.primaryColor : null,
+            // --- SÉLECTEUR DE COMMUNE ---
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(
+                hintText: _ville == null ? 'Choisissez d\'abord une ville' : 'Choisissez une commune',
+                filled: true,
+                fillColor: theme.inputDecorationTheme.fillColor,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              ),
+              style: TextStyle(color: theme.colorScheme.onSurface),
+              dropdownColor: theme.cardTheme.color,
+              value: _commune,
+              items: _communesFiltrees.map((c) => DropdownMenuItem<String>(value: c, child: Text(c))).toList(),
+              onChanged: _ville == null ? null : (val) {
+                if (val == null) return;
+                setState(() {
+                  _commune = val;
+                  _paroissesFiltrees = _allParishes
+                      .where((p) => p['ville'] == _ville && p['commune'] == _commune)
+                      .toList();
+
+                  _paroisseId = null;
+                  _paroisseName = null;
+                  _montantUnitaire = 0;
+                  _calculerMontant();
+                });
+              },
+            ),
+            const SizedBox(height: 24),
+
+            // --- SÉLECTEUR DE PAROISSE ---
+            Text('Paroisse', style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<int>(
+                    isExpanded: true,
+                    decoration: InputDecoration(
+                      hintText: _commune == null ? 'Choisissez d\'abord une commune' : 'Choisissez une paroisse',
+                      filled: true,
+                      fillColor: theme.inputDecorationTheme.fillColor,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Color(0xFFE2E8F0), width: 1),
                       ),
                     ),
+                    style: TextStyle(color: theme.colorScheme.onSurface),
+                    dropdownColor: theme.cardTheme.color,
+                    value: _paroisseId,
+                    items: _paroissesFiltrees.map((p) => DropdownMenuItem<int>(
+                        value: p['id'] as int,
+                        child: Text(p['name'] as String, overflow: TextOverflow.ellipsis)
+                    )).toList(),
+                    onChanged: _commune == null ? null : (val) {
+                      if (val == null) return;
+                      final paroisseData = _paroissesFiltrees.firstWhere((p) => p['id'] == val);
+                      _onParishSelected(paroisseData);
+                    },
                   ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: Icon(_isCurrentParishFavorite ? Icons.star : Icons.star_border, color: _isCurrentParishFavorite ? AppTheme.warningColor : AppTheme.textSecondary, size: 30),
+                  onPressed: (_paroisseId == null) ? null : () async {
+                    bool success = await _authService.toggleParishFavorite(_paroisseId!);
 
-                  if (isSelected)
+                    if (success) {
+                      _updateFavoriteStatus();
+                      _authService.getFavoriteParishes().then((favs) {
+                        if(mounted) setState(() => _allFavoriteParishes = favs);
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 24),
+
+            // --- DATE ET HEURE ---
+            Text(
+              'Date et heure de la messe *',
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: CustomTextField(
+                    controller: _dateCtrl,
+                    label: 'Date souhaitée',
+                    hint: 'Choisir une date',
+                    prefixIcon: Icons.calendar_today,
+                    readOnly: true,
+                    onTap: () async {
+                      final date = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now().add(const Duration(days: 1)),
+                        firstDate: DateTime.now().add(const Duration(days: 1)),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                        builder: (context, child) {
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              colorScheme: Theme.of(context).colorScheme.copyWith(
+                                primary: AppTheme.primaryColor,
+                                onPrimary: Colors.white,
+                                onSurface: Theme.of(context).colorScheme.onSurface,
+                              ),
+                              dialogBackgroundColor: Theme.of(context).cardTheme.color,
+                              textSelectionTheme: const TextSelectionThemeData(
+                                cursorColor: Colors.black,
+                                selectionHandleColor: Colors.black,
+                                selectionColor: Color(0xFFCCCCCC),
+                              ),
+                            ),
+                            child: child!,
+                          );
+                        },
+                      );
+                      if (date != null) {
+                        _dateCtrl.text = DateFormat('dd/MM/yyyy').format(date);
+                      }
+                    },
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                Expanded(
+                  child: CustomTextField(
+                    controller: _heureCtrl,
+                    label: 'Heure souhaitée',
+                    hint: 'Choisir une heure',
+                    prefixIcon: Icons.access_time,
+                    readOnly: true,
+                    onTap: () async {
+                      final time = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay.now(),
+                        builder: (context, child) {
+                          return Theme(
+                            data: Theme.of(context).copyWith(
+                              colorScheme: Theme.of(context).colorScheme.copyWith(
+                                primary: AppTheme.primaryColor,
+                                onPrimary: Colors.white,
+                                onSurface: Theme.of(context).colorScheme.onSurface,
+                                surface: Theme.of(context).cardTheme.color,
+                              ),
+                              dialogBackgroundColor: Theme.of(context).cardTheme.color,
+                              textSelectionTheme: const TextSelectionThemeData(
+
+                                cursorColor: Colors.black,
+                                selectionHandleColor: Colors.black,
+                                selectionColor: Color(0xFFCCCCCC),
+                              ),
+                            ),
+                            child: child!,
+                          );
+                        },
+                      );
+                      if (time != null) {
+                        _heureCtrl.text = time.format(context);
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // --- TYPE DE CÉLÉBRATION ---
+            Text(
+              'Type de célébration',
+              style: theme.textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ).animate().fadeIn(duration: 600.ms, delay: 500.ms),
+
+            const SizedBox(height: 12),
+
+            ..._celebrationTypes.asMap().entries.map((entry) {
+              final index = entry.key;
+              final type = entry.value;
+              final isSelected = _celebration == type;
+
+              return ModernCard(
+                margin: const EdgeInsets.only(bottom: 12),
+                backgroundColor: isSelected ? AppTheme.primaryColor.withOpacity(0.1) : null,
+                borderColor: isSelected ? AppTheme.primaryColor : null,
+                onTap: () {
+                  setState(() {
+                    _celebration = type;
+                    if (_celebration == 'Messe dominicale') _genererDimanches();
+                    _calculerMontant();
+                  });
+                },
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppTheme.primaryColor
+                            : theme.colorScheme.onSurface.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        _getCelebrationIcon(type),
+                        color: isSelected ? Colors.white : theme.colorScheme.onSurface.withOpacity(0.6),
+                        size: 20,
+                      ),
+                    ),
+
+                    const SizedBox(width: 16),
+
+                    Expanded(
+                      child: Text(
+                        type,
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: isSelected ? AppTheme.primaryColor : null,
+                        ),
+                      ),
+                    ),
+
+                    if (isSelected)
+                      Icon(
+                        Icons.check_circle,
+                        color: AppTheme.primaryColor,
+                      ),
+                  ],
+                ),
+              ).animate().fadeIn(
+                duration: 600.ms,
+                delay: Duration(milliseconds: 600 + (index * 100)),
+              ).slideX(
+                begin: -0.3,
+                duration: 600.ms,
+                delay: Duration(milliseconds: 600 + (index * 100)),
+                curve: Curves.easeOut,
+              );
+            }).toList(),
+
+            if (_celebration == "Messe quotidienne") ...[
+              const SizedBox(height: 24),
+              _buildDaySelector(),
+            ],
+
+            if (_celebration == "Messe dominicale") ...[
+              const SizedBox(height: 24),
+              _buildSundaySelector(),
+            ],
+
+            // --- AFFICHAGE PRIX ---
+            if (_montantTotal > 0) ...[
+
+              const SizedBox(height: 24),
+              ModernCard(
+                backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                borderColor: AppTheme.primaryColor.withOpacity(0.3),
+                child: Row(
+                  children: [
                     Icon(
-                      Icons.check_circle,
+                      Icons.account_balance_wallet,
                       color: AppTheme.primaryColor,
                     ),
-                ],
-              ),
-            ).animate().fadeIn(
-              duration: 600.ms,
-              delay: Duration(milliseconds: 600 + (index * 100)),
-            ).slideX(
-              begin: -0.3,
-              duration: 600.ms,
-              delay: Duration(milliseconds: 600 + (index * 100)),
-              curve: Curves.easeOut,
-            );
-          }).toList(),
-
-          // Additional options based on celebration type
-          if (_celebration == "Messe quotidienne") ...[
-            const SizedBox(height: 24),
-            _buildDaySelector(),
-          ],
-
-          if (_celebration == "Messe dominicale") ...[
-            const SizedBox(height: 24),
-            _buildSundaySelector(),
-          ],
-
-          // Price display
-          if (_montantTotal > 0) ...[
-            const SizedBox(height: 24),
-            ModernCard(
-              backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
-              borderColor: AppTheme.primaryColor.withOpacity(0.3),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.account_balance_wallet,
-                    color: AppTheme.primaryColor,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Montant total',
-                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Montant total',
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: theme.colorScheme.onSurface.withOpacity(0.6),
+                            ),
                           ),
-                        ),
-                        Text(
-                          '${_montantTotal.toStringAsFixed(0)} FCFA',
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.primaryColor,
+                          Text(
+                            '${_montantTotal.toStringAsFixed(0)} FCFA',
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: AppTheme.primaryColor,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+              ).animate().fadeIn(duration: 600.ms, delay: 900.ms).scale(
+                begin: const Offset(0.9, 0.9),
+                duration: 600.ms,
+                delay: 900.ms,
+                curve: Curves.elasticOut,
               ),
-            ).animate().fadeIn(duration: 600.ms, delay: 900.ms).scale(
-              begin: const Offset(0.9, 0.9),
-              duration: 600.ms,
-              delay: 900.ms,
-              curve: Curves.elasticOut,
-            ),
+            ],
+
+            // ✅ 3. ESPACE EN BAS (Pour ne pas cacher le contenu derrière le bouton "Suivant")
+            const SizedBox(height: 100),
           ],
-        ],
+        ),
       ),
     );
   }
@@ -1435,204 +1456,204 @@ class _RequestsScreenState extends State<RequestsScreen>
 
 
   Widget _buildConfirmationStep() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Text(
-            'Confirmation',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.3, duration: 600.ms),
+    final theme = Theme.of(context); // Pour les couleurs du RefreshIndicator
 
-          const SizedBox(height: 8),
+    // ✅ 1. ENVELOPPER DANS REFRESH INDICATOR
+    return RefreshIndicator(
+      onRefresh: _handleRefresh,
+      color: AppTheme.primaryColor,
+      backgroundColor: theme.cardTheme.color,
 
-          Text(
-            'Vérifiez les informations de votre demande',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-            ),
-          ).animate().fadeIn(duration: 600.ms, delay: 200.ms),
+      child: SingleChildScrollView(
+        // ✅ 2. PHYSIQUE DE SCROLL OBLIGATOIRE
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(24),
 
-          const SizedBox(height: 32),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Text(
+              'Confirmation',
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.3, duration: 600.ms),
 
+            const SizedBox(height: 8),
 
-          ModernCard(
-            backgroundColor: Theme.of(context).cardTheme.color,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.church, color: AppTheme.secondaryColor),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Détails de la messe',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurface
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Paroisse: ${_paroisseName ?? "Non spécifiée"}',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                Text(
-                  'Type: ${_celebration ?? "Non spécifié"}',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                if (_montantTotal > 0) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: AppTheme.accentColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'Montant: ${_montantTotal.toStringAsFixed(0)} FCFA',
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: AppTheme.primaryColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ).animate().fadeIn(duration: 600.ms, delay: 400.ms),
+            Text(
+              'Vérifiez les informations de votre demande',
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ).animate().fadeIn(duration: 600.ms, delay: 200.ms),
 
-          const SizedBox(height: 16),
+            const SizedBox(height: 32),
 
-          // --- NOUVEAU FORMAT DE CONFIRMATION ---
-          ModernCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // En-tête demandé
-                Text(
-                  'AIDE, ASSISTANCE ET PROTECTION',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryColor
-                  ),
-                ),
-                const Divider(height: 24),
-
-                // Corps du message demandé
-                // Nouvelle ligne corrigée
-                Text.rich(
-                  TextSpan(
-                    style: Theme.of(context).textTheme.bodyLarge,
+            // --- CARTE 1 : DÉTAILS ---
+            ModernCard(
+              backgroundColor: theme.cardTheme.color,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      TextSpan(
-                        // Affiche "M." ou "Mme" et le nom de l'utilisateur
-                        text: '${_demandeurCivilite} ${_demandeurNom} ', // ✅ MODIFIÉ ICI
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      TextSpan(
-                        // Le reste de la phrase, avec "demande" au singulier
-                          text: 'demande Aide, assistance et protection au seigneur pour ${_motifCtrl.text.isNotEmpty ? _motifCtrl.text : 'non spécifié'}'
+                      Icon(Icons.church, color: AppTheme.secondaryColor),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Détails de la messe',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                            color: theme.colorScheme.onSurface
+                        ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  // Si le champ est vide, on affiche les "....", sinon on affiche le nom du saint.
-                  'Par l\'intercession de ${_intercesseurCtrl.text.isNotEmpty ? _intercesseurCtrl.text : "...."}',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Date de la messe : ${_dateCtrl.text}',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Heure de la messe : ${_heureCtrl.text}',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Paroisse : ${_paroisseName ?? "Non spécifiée"}',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Type : ${_celebration ?? "Non spécifié"}',
-                  style: Theme.of(context).textTheme.bodyLarge,
-                ),
-              ],
-            ),
-          ).animate().fadeIn(duration: 600.ms, delay: 300.ms),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Paroisse: ${_paroisseName ?? "Non spécifiée"}',
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                  Text(
+                    'Type: ${_celebration ?? "Non spécifié"}',
+                    style: theme.textTheme.bodyLarge,
+                  ),
 
-          const SizedBox(height: 16),
-
-          // DANS _buildConfirmationStep()
-
-          ModernCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    // 1. Suppression de l'icône à gauche
-                    // Icon(Icons.person_outline, color: AppTheme.textSecondary),
-                    // const SizedBox(width: 12), // Supprime aussi l'espace si l'icône est partie
-                    Expanded( // Pour que le texte prenne l'espace restant
+                  if (_montantTotal > 0) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppTheme.accentColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
                       child: Text(
-                        'Informations du demandeur',
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        'Montant: ${_montantTotal.toStringAsFixed(0)} FCFA',
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: AppTheme.primaryColor,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12), // Espace avant l'avatar
-
-                    // 2. Avatar de l'utilisateur (ou image par défaut)
-                    CircleAvatar(
-                      radius: 20, // Taille de l'avatar
-                      backgroundColor: AppTheme.primaryColor.withOpacity(0.1), // Couleur de fond par défaut
-                      // Tu devras obtenir l'URL de la photo de profil de l'utilisateur
-                      // depuis ton AuthService ou ton modèle utilisateur.
-                      // Pour cet exemple, on suppose que tu as une variable _userProfileImageUrl
-                      // ou tu la récupères directement de AuthService.
-
-                      // Exemple avec AuthService
-                      // Utilise un Consumer si tu ne veux pas passer par le Provider.of directement dans build
-                      // Ou, si tu as déjà chargé les infos utilisateur dans initState:
-                      backgroundImage: (_demandeurProfileImageUrl != null && _demandeurProfileImageUrl!.isNotEmpty)
-                          ? NetworkImage(_demandeurProfileImageUrl!) as ImageProvider<Object>?
-                          : null, // Si pas d'image, le background couleur sera visible
-                      child: (_demandeurProfileImageUrl == null || _demandeurProfileImageUrl!.isEmpty)
-                          ? Icon(Icons.person, color: AppTheme.primaryColor, size: 28) // Icône par défaut si pas de photo
-                          : null,
-                    ),
                   ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Nom: ${_demandeurNom.isNotEmpty ? _demandeurNom : "N/A"}',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                Text(
-                  'Email: ${_demandeurEmail.isNotEmpty ? _demandeurEmail : "N/A"}',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                Text(
-                  'Téléphone: ${_demandeurTel.isNotEmpty ? _demandeurTel : "N/A"}',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ],
-            ),
-          ).animate().fadeIn(duration: 600.ms, delay: 600.ms),
-        ],
+                ],
+              ),
+            ).animate().fadeIn(duration: 600.ms, delay: 400.ms),
+
+            const SizedBox(height: 16),
+
+            // --- CARTE 2 : TEXTE DE LA DEMANDE ---
+            ModernCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // En-tête demandé
+                  Text(
+                    'AIDE, ASSISTANCE ET PROTECTION',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryColor
+                    ),
+                  ),
+                  const Divider(height: 24),
+
+                  // Corps du message
+                  Text.rich(
+                    TextSpan(
+                      style: theme.textTheme.bodyLarge,
+                      children: [
+                        TextSpan(
+                          text: '${_demandeurCivilite} ${_demandeurNom} ',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        TextSpan(
+                            text: 'demande Aide, assistance et protection au seigneur pour ${_motifCtrl.text.isNotEmpty ? _motifCtrl.text : 'non spécifié'}'
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Par l\'intercession de ${_intercesseurCtrl.text.isNotEmpty ? _intercesseurCtrl.text : "...."}',
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Date de la messe : ${_dateCtrl.text}',
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Heure de la messe : ${_heureCtrl.text}',
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Paroisse : ${_paroisseName ?? "Non spécifiée"}',
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Type : ${_celebration ?? "Non spécifié"}',
+                    style: theme.textTheme.bodyLarge,
+                  ),
+                ],
+              ),
+            ).animate().fadeIn(duration: 600.ms, delay: 300.ms),
+
+            const SizedBox(height: 16),
+
+            // --- CARTE 3 : INFOS DEMANDEUR ---
+            ModernCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Informations du demandeur',
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+
+                      // Avatar de l'utilisateur
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                        backgroundImage: (_demandeurProfileImageUrl != null && _demandeurProfileImageUrl!.isNotEmpty)
+                            ? NetworkImage(_demandeurProfileImageUrl!) as ImageProvider<Object>?
+                            : null,
+                        child: (_demandeurProfileImageUrl == null || _demandeurProfileImageUrl!.isEmpty)
+                            ? Icon(Icons.person, color: AppTheme.primaryColor, size: 28)
+                            : null,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Nom: ${_demandeurNom.isNotEmpty ? _demandeurNom : "N/A"}',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  Text(
+                    'Email: ${_demandeurEmail.isNotEmpty ? _demandeurEmail : "N/A"}',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                  Text(
+                    'Téléphone: ${_demandeurTel.isNotEmpty ? _demandeurTel : "N/A"}',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            ).animate().fadeIn(duration: 600.ms, delay: 600.ms),
+
+            // ✅ 3. ESPACE EN BAS (Pour ne pas cacher le contenu derrière le bouton "Confirmer")
+            const SizedBox(height: 100),
+          ],
+        ),
       ),
     );
   }

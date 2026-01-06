@@ -16,7 +16,6 @@ import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 
 
-
 // --- Couleurs du Mockup ---
 const Color _mockupTurquoise = Color(0xFF5AC3C2); // Couleur du titre "Se connecter"
 const Color _mockupOcre = Color(0xFFC0A040); // Couleur du bouton principal
@@ -254,7 +253,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
         await Future.delayed(const Duration(milliseconds: 500));
         if (mounted) {
-          Navigator.pushReplacementNamed(context, '/dashboard');
+          // ✅ NOUVELLE LOGIQUE DE REDIRECTION INTELLIGENTE
+          final currentUser = authService; // Raccourci vers ton provider
+
+          // On vérifie si les infos vitales manquent
+          // Note: Google ne donne jamais le téléphone, donc ce sera souvent vrai la 1ère fois
+          bool missingInfo = (currentUser.phone == null || currentUser.phone!.isEmpty)
+           || (currentUser.civilite == null || currentUser.civilite!.isEmpty);
+
+          if (missingInfo) {
+            print("Profil incomplet -> Redirection vers CompleteProfile");
+            Navigator.pushReplacementNamed(context, '/complete_profile');
+          } else {
+            print("Profil complet -> Redirection vers Dashboard");
+            Navigator.pushReplacementNamed(context, '/dashboard');
+          }
         }
       } else {
         _showError(l10n.loginErrorCredentials);
@@ -557,8 +570,17 @@ class _LoginScreenState extends State<LoginScreen> {
                                               ),
                                             );
 
-                                            // Redirection immédiate
-                                            navigator.pushReplacementNamed('/dashboard');
+                                            // Est-ce qu'il manque le téléphone OU la civilité ?
+                                            bool missingInfo = (auth.phone == null || auth.phone!.isEmpty)
+                                                || (auth.civilite == null || auth.civilite!.isEmpty);
+
+                                            if (missingInfo) {
+                                              print("Profil incomplet (Apple) -> Redirection vers CompleteProfile");
+                                              Navigator.pushReplacementNamed(context, '/complete_profile');
+                                            } else {
+                                              print("Profil complet (Apple) -> Redirection vers Dashboard");
+                                              Navigator.pushReplacementNamed(context, '/dashboard');
+                                            }
 
                                           } else {
                                             // Échec

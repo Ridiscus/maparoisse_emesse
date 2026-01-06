@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:maparoisse/src/screens/auth/complete_profile_screen.dart';
 import 'package:maparoisse/src/screens/home/payment_success_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/auth/login_screen.dart';
@@ -26,6 +27,7 @@ final Map<String, WidgetBuilder> appRoutes = {
   '/requests': (context) => const RequestsScreen(),
   '/profile': (context) => const ProfileScreen(),
   '/favorites': (context) => const FavoriteParishesScreen(),
+  '/complete_profile': (context) => const CompleteProfileScreen(),
   '/parametres': (context) => const SettingsScreen(),
   '/settings': (context) => const SecurityScreen(),
   '/notification': (context) => const NotificationsScreen(),

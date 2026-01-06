@@ -238,6 +238,7 @@ class RequestDetailModal extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
 
     const statusEnAttente = 'en_attente_paiement';
+    const statusEnAttenteValidation = 'en attente'; // ✅ CELUI QU'ON AJOUTE
     const statusConfirme = 'confirmee';
     const statusCelebre = 'celebre';
 
@@ -336,8 +337,11 @@ class RequestDetailModal extends StatelessWidget {
       );
     }
 
-// --- CAS 2: Confirmé ou Célébré ---
-    if (statusLower == statusConfirme || statusLower == statusCelebre) {
+    // --- CAS 2: Confirmé, Célébré OU En attente de validation ---
+    // ✅ MODIFICATION ICI : On ajoute la condition || statusLower == statusEnAttenteValidation
+    if (statusLower == statusConfirme ||
+        statusLower == statusCelebre ||
+        statusLower == statusEnAttenteValidation) {
       return Row(
         children: [
           Expanded(

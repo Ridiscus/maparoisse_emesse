@@ -15,6 +15,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:maparoisse/src/screens/home/settings_screen.dart';
 import 'package:maparoisse/src/screens/home/identification_screen.dart';
 import 'package:in_app_update/in_app_update.dart';
+import 'package:upgrader/upgrader.dart';
 import 'dart:io';
 
 
@@ -363,35 +364,33 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // On utilise le thème pour les couleurs de fond
     final theme = Theme.of(context);
 
-    return Scaffold(
+    // 1. On définit d'abord ton Interface Principale (Le Scaffold)
+    // On le met dans une variable pour ne pas répéter le code
+    Widget mainContent = Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
 
       body: SafeArea(
-        // 1. GESTION DU CHARGEMENT INITIAL
-        // Si c'est le tout premier chargement (_loading est true), on affiche le rond au centre.
-        // Sinon, on affiche l'interface avec le RefreshIndicator.
+        // GESTION DU CHARGEMENT INITIAL
         child: _loading
             ? const Center(child: CircularProgressIndicator(color: Color(0xFFC0A040)))
             : RefreshIndicator(
-          // 2. GESTION DU RAFRAÎCHISSEMENT
+          // GESTION DU RAFRAÎCHISSEMENT
           onRefresh: _handleRefresh,
-          color: const Color(0xFFC0A040), // Couleur Ocre
-          backgroundColor: theme.cardTheme.color, // Fond du rond adapté au mode sombre
+          color: const Color(0xFFC0A040),
+          backgroundColor: theme.cardTheme.color,
 
           child: SingleChildScrollView(
-            // 3. PHYSIQUE DU SCROLL (CRUCIAL)
-            // Cette ligne permet de "tirer" l'écran même s'il y a peu de contenu
+            // PHYSIQUE DU SCROLL
             physics: const AlwaysScrollableScrollPhysics(),
 
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0), // Ton padding d'origine
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 16), // Espace en haut
+                  const SizedBox(height: 16),
 
                   // Tes widgets existants
                   _buildAppBarContent(context),
@@ -410,7 +409,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildIdentificationCard(context),
                   // ----------------------------------------
 
-                  // Espace supplémentaire en bas pour ne pas être caché par la BottomNavBar
+                  // Espace supplémentaire en bas pour la BottomNavBar
                   const SizedBox(height: 80),
                 ],
               ),
@@ -419,6 +418,26 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+
+    // 2. LOGIQUE DE MISE À JOUR CIBLÉE
+    if (Platform.isIOS) {
+      // ✅ SUR iOS : On enveloppe l'appli avec UpgradeAlert pour surveiller l'App Store
+      return UpgradeAlert(
+        upgrader: Upgrader(
+          // Configure le code pays si besoin, sinon 'US' par défaut ou auto
+          // countryCode: 'FR',
+          durationUntilAlertAgain: const Duration(days: 1), // Rappel demain si ignoré
+        ),
+        dialogStyle: UpgradeDialogStyle.cupertino, // Style natif iPhone
+        showIgnore: false, // Force un peu la main (Mettre à jour ou Plus tard)
+        showLater: true,
+        child: mainContent,
+      );
+    } else {
+      // ✅ SUR ANDROID : On retourne juste le Scaffold
+      // (Car ta fonction _checkForUpdate() gère déjà ça au démarrage)
+      return mainContent;
+    }
   }
 
 

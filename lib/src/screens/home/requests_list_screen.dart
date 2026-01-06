@@ -194,36 +194,45 @@ class _RequestsListScreenState extends State<RequestsListScreen> with TickerProv
 
 
   List<dynamic> _getRequestsForTab(int tabIndex) {
-    // Plus besoin de récupérer l10n ici pour le switch
     List<dynamic> filtered = [];
 
-    // Statuts de la table 'messe'
+    // Définition des statuts (Identique à avant)
     const statusNonPaye = 'en_attente_paiement';
     const statusPayeAttenteConfirm = 'en attente';
-    const statusConfirme = 'confirmee';
+    const statusConfirme = 'confirmee'; // Celle qu'on déplace
     const statusCelebre = 'celebre';
     const statusAnnule = 'annulee';
 
-    // ✅ CORRECTION : Switch sur l'index (entier) au lieu du texte
     switch (tabIndex) {
-      case 0: // Correspond à "En cours" (tab_in_progress)
+      case 0: // Onglet "En cours"
         filtered = _allRequests.where((r) {
           String status = (r['statut'] ?? '').toLowerCase();
-          return status == statusNonPaye || status == statusPayeAttenteConfirm;
+
+          // ✅ MODIFICATION : On ajoute 'statusConfirme' ici
+          // La messe est en cours si elle est impayée, en attente de validation OU validée (mais pas encore dite)
+          return status == statusNonPaye ||
+              status == statusPayeAttenteConfirm ||
+              status == statusConfirme;
         }).toList();
         break;
 
-      case 1: // Correspond à "Historique" (tab_history)
+      case 1: // Onglet "Historique"
         filtered = _allRequests.where((r) {
           String status = (r['statut'] ?? '').toLowerCase();
-          return status == statusConfirme || status == statusCelebre || status == statusAnnule;
+
+          // ✅ MODIFICATION : On ne garde que ce qui est TERMINÉ (Célébré ou Annulé)
+          return status == statusCelebre || status == statusAnnule;
         }).toList();
         break;
+
+    // Le case 2 (Favoris) est géré ailleurs ou via une autre liste, donc pas besoin de toucher.
     }
 
+    // Tri par date décroissante (plus récent en haut)
     filtered.sort((a, b) =>
         _parseDateRobust(b['created_at']).compareTo(_parseDateRobust(a['created_at']))
     );
+
     return filtered;
   }
 
