@@ -79,6 +79,58 @@ class _ParishScreenState extends State<ParishScreen> {
     }
   }
 
+
+  // --- NOUVEAU : GESTION FAVORIS DEPUIS LA LISTE ---
+  Future<void> _toggleFavoriteFromList(int parishId, int index) async {
+    final l10n = AppLocalizations.of(context)!;
+
+    // 1. On récupère l'état actuel (si null, on suppose false)
+    bool currentStatus = _filteredParishes[index]['is_favori'] ?? false;
+
+    // 2. On met à jour l'UI *optimistement* (tout de suite) pour la réactivité
+    setState(() {
+      _filteredParishes[index]['is_favori'] = !currentStatus;
+
+      // On doit aussi mettre à jour la liste principale '_allParishes' pour que la recherche reste synchro
+      final indexInAll = _allParishes.indexWhere((p) => p['id'] == parishId);
+      if (indexInAll != -1) {
+        _allParishes[indexInAll]['is_favori'] = !currentStatus;
+      }
+    });
+
+    try {
+      final authService = Provider.of<AuthService>(context, listen: false);
+
+      // 3. Appel API
+      bool success = await authService.toggleParishFavorite(parishId);
+
+      if (!success) {
+        // Si l'API échoue, on annule le changement visuel (Rollback)
+        if (mounted) {
+          setState(() {
+            _filteredParishes[index]['is_favori'] = currentStatus;
+            final indexInAll = _allParishes.indexWhere((p) => p['id'] == parishId);
+            if (indexInAll != -1) {
+              _allParishes[indexInAll]['is_favori'] = currentStatus;
+            }
+          });
+          _showTopNetworkError(l10n.favoritesUpdateError);
+        }
+      } else {
+        // Succès confirmé (Optionnel : petit message discret)
+        // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Favoris mis à jour"), duration: Duration(milliseconds: 500)));
+      }
+    } catch (e) {
+      print("Erreur Toggle List: $e");
+      // Rollback en cas d'exception
+      if (mounted) {
+        setState(() {
+          _filteredParishes[index]['is_favori'] = currentStatus;
+        });
+      }
+    }
+  }
+
   // --- NOUVEAU : Logique de filtre ---
   void _filterParishes() {
     final query = _searchController.text.toLowerCase().trim();
@@ -289,7 +341,7 @@ class _ParishScreenState extends State<ParishScreen> {
                   padding: const EdgeInsets.all(12.0),
                   itemCount: _filteredParishes.length,
                   itemBuilder: (context, index) {
-                    return _buildParishItem(_filteredParishes[index]);
+                    return _buildParishItem(_filteredParishes[index], index);
                   },
                 ),
               ),
@@ -301,12 +353,12 @@ class _ParishScreenState extends State<ParishScreen> {
   }
 
 
-  // --- WIDGET ITEM ENTIÈREMENT CORRIGÉ ---
-  Widget _buildParishItem(Map<String, dynamic> parish) {
+
+  // --- WIDGET ITEM CORRIGÉ AVEC ÉTOILE ---
+  Widget _buildParishItem(Map<String, dynamic> parish, int index) { // <-- Ajout de 'index'
     const Color detailsButtonColor = Color(0xFFC0A040);
     final l10n = AppLocalizations.of(context)!;
-
-    final theme = Theme.of(context); // Raccourci thème
+    final theme = Theme.of(context);
 
     // --- 1. CORRECTION GESTION IMAGE (Logique de nettoyage agressive) ---
     String? imgPath = parish['profile_picture']; // C'est la bonne clé
@@ -364,6 +416,11 @@ class _ParishScreenState extends State<ParishScreen> {
     }
     // --- FIN GESTION INFOS ---
 
+    // Récupération de l'état favori (géré par l'API ou false par défaut)
+    // Note: Assure-toi que ton API getParishes() renvoie bien un champ 'is_favori' (bool ou 0/1)
+    // Si l'API renvoie 0/1, convertis-le : (parish['is_favori'] == 1 || parish['is_favori'] == true)
+    bool isFav = (parish['is_favori'] == true || parish['is_favori'] == 1);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12.0),
       padding: const EdgeInsets.all(12.0),
@@ -374,14 +431,15 @@ class _ParishScreenState extends State<ParishScreen> {
       ),
       child: Row(
         children: [
-          // Image (utilise le placeholder)
+          // Image
           CircleAvatar(
             radius: 30,
-            backgroundImage: backgroundImage,
+            backgroundImage: backgroundImage, // Ta variable 'backgroundImage' calculée
             backgroundColor: Colors.grey[200],
           ),
-          const SizedBox(width: 16),
-          // Infos Paroisse (corrigées)
+          const SizedBox(width: 12), // Réduit un peu l'espace
+
+          // Infos Paroisse
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -397,7 +455,7 @@ class _ParishScreenState extends State<ParishScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  locationInfo, // <-- Corrigé
+                  locationInfo, // Ta variable 'locationInfo' calculée
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurface.withOpacity(0.6),
                   ),
@@ -407,29 +465,57 @@ class _ParishScreenState extends State<ParishScreen> {
               ],
             ),
           ),
-          const SizedBox(width: 16),
-          // Bouton Détails
-          ElevatedButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      ParishDetailScreen(parishData: parish),
+
+          // --- ZONE D'ACTION ---
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              // 1. L'ÉTOILE FAVORIS
+              InkWell(
+                onTap: () {
+                  // Appelle la fonction de toggle avec l'ID et l'index
+                  _toggleFavoriteFromList(parish['id'], index);
+                },
+                borderRadius: BorderRadius.circular(20),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Icon(
+                    isFav ? Icons.star : Icons.star_border, // Plein ou Vide
+                    color: isFav ? AppTheme.warningColor : Colors.grey[400], // Jaune ou Gris
+                    size: 26,
+                  ),
                 ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: detailsButtonColor.withOpacity(0.15),
-              foregroundColor: detailsButtonColor,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              minimumSize: const Size(0, 36),
-            ),
-            child: Text(l10n.detailsButton),
+
+              // 2. BOUTON DÉTAILS (Plus petit)
+
+              SizedBox(
+                height: 32,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ParishDetailScreen(parishData: parish),
+                      ),
+                    ).then((_) {
+                       // Optionnel : Recharger la liste quand on revient des détails
+                       // car l'état favori a pu changer là-bas
+
+                    _loadParishes();
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: detailsButtonColor.withOpacity(0.1),
+                    foregroundColor: detailsButtonColor,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                  ),
+                  child: Text(l10n.detailsButton, style: const TextStyle(fontSize: 12)),
+                ),
+              ),
+
+            ],
           ),
         ],
       ),

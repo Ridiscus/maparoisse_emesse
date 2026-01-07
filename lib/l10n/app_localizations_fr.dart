@@ -54,6 +54,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsFaqHelp => 'FAQ / Aide';
 
   @override
+  String get settingsTutorials => 'Tutoriels vidéo';
+
+  @override
   String get settingsPrivacyPolicy => 'Politique de confidentialité';
 
   @override

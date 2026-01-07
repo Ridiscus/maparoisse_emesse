@@ -54,6 +54,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsFaqHelp => 'FAQ / Help';
 
   @override
+  String get settingsTutorials => 'Video tutorials';
+
+  @override
   String get settingsPrivacyPolicy => 'Privacy Policy';
 
   @override

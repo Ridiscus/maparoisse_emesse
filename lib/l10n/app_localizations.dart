@@ -188,6 +188,12 @@ abstract class AppLocalizations {
   /// **'FAQ / Aide'**
   String get settingsFaqHelp;
 
+  /// No description provided for @settingsTutorials.
+  ///
+  /// In fr, this message translates to:
+  /// **'Tutoriels vidéo'**
+  String get settingsTutorials;
+
   /// No description provided for @settingsPrivacyPolicy.
   ///
   /// In fr, this message translates to:

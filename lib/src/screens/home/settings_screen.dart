@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:maparoisse/src/screens/home/tutorials_screen.dart';
 import 'package:provider/provider.dart'; // Si tu utilises Provider pour le thème
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../providers/font_size_provider.dart';
@@ -317,6 +318,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             // --- FIN NAVIGATION ---
                           },
                         ),
+                        const Divider(height: 1),
+                        // ✅ NOUVEAU : TUTORIELS VIDÉO
+                        _buildSettingsItem(
+                          icon: Icons.ondemand_video, // Icône vidéo
+                          text: l10n.settingsTutorials, // TODO: Localiser (l10n.settingsTutorials)
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const TutorialsScreen()),
+                            );
+                          },
+                        ),
+
                         const Divider(height: 1),
                         _buildSettingsItem(
                           icon: Icons.help_outline,

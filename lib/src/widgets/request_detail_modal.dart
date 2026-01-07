@@ -380,7 +380,7 @@ class RequestDetailModal extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12)
                     ),
                     margin: EdgeInsets.only(
-                        bottom: screenHeight - 165,
+                        bottom: screenHeight - 205,
                         left: 20,
                         right: 20
                     ),

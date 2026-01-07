@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:maparoisse/src/screens/home/tutorials_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../app_themes.dart';
 import 'home_screen.dart';
 import 'requests_screen.dart';
@@ -58,6 +60,13 @@ class _DashboardScreenWithIndexState extends State<DashboardScreenWithIndex> {
     // Écoute les changements externes sur bottomNavIndex
     bottomNavIndex.addListener(_onBottomNavIndexChanged);
     // --- FIN AJOUT ---
+
+    // Vérification après le rendu de la page
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkFirstTimeTutorial();
+    });
+
+
   }
 
 
@@ -66,6 +75,81 @@ class _DashboardScreenWithIndexState extends State<DashboardScreenWithIndex> {
   void dispose() {
     _linkSubscription?.cancel(); // N'oublie pas de l'arrêter
     super.dispose();
+  }
+
+
+  Future<void> _checkFirstTimeTutorial() async {
+    final prefs = await SharedPreferences.getInstance();
+    // Vérifie si la clé 'has_seen_tuto' existe
+    bool hasSeen = prefs.getBool('has_seen_tuto') ?? false;
+
+    if (!hasSeen) {
+      // 1. On marque tout de suite comme "vu" pour ne pas le harceler
+      await prefs.setBool('has_seen_tuto', true);
+
+      if (!mounted) return;
+
+      // 2. On affiche le Modal joli
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (context) => Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Illustration (Lottie ou Image)
+              const Icon(Icons.live_tv_rounded, size: 60, color: Color(0xFFC0A040)), // Ocre
+              const SizedBox(height: 16),
+
+              Text(
+                "Bienvenue sur E-Messe !",
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                "Pour vous aider à démarrer, nous avons préparé quelques vidéos courtes pour vous montrer comment demander une messe simplement.",
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+
+              // Bouton : Voir maintenant
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.play_circle_outline),
+                  label: const Text("Regarder les tutoriels"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFC0A040),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context); // Ferme le modal
+                    // Va vers l'écran Tutos
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => const TutorialsScreen()));
+                  },
+                ),
+              ),
+
+              // Bouton : Plus tard
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text("Plus tard", style: TextStyle(color: Colors.grey[600])),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
   }
 
 

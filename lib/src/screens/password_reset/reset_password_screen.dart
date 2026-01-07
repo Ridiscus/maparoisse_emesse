@@ -24,6 +24,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   final _confirmPassCtrl = TextEditingController();
   bool _isLoading = false;
 
+
+  // ✅ AJOUT : Variables pour gérer la visibilité
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+
   Future<void> _resetPassword() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -67,14 +72,17 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-
     final theme = Theme.of(context);
 
-    // Petit helper local pour ne pas répéter le code de décoration
-    InputDecoration inputDeco(String label, IconData icon) {
+    // ✅ MODIFIÉ : Ajout du paramètre optionnel {Widget? suffixIcon}
+    InputDecoration inputDeco(String label, IconData icon, {Widget? suffixIcon}) {
       return InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, color: theme.colorScheme.onSurface.withOpacity(0.6)),
+
+        // On ajoute l'icône à droite (l'œil)
+        suffixIcon: suffixIcon,
+
         filled: true,
         fillColor: theme.cardTheme.color,
         border: OutlineInputBorder(
@@ -90,10 +98,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     }
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor, // ✅
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(l10n.resetPasswordTitle, style: TextStyle(color: theme.colorScheme.onSurface)),
-        backgroundColor: theme.scaffoldBackgroundColor, // ✅
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
       ),
@@ -114,7 +122,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.onSurface // ✅
+                          color: theme.colorScheme.onSurface
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -124,8 +132,24 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     TextFormField(
                       controller: _passCtrl,
                       style: TextStyle(color: theme.colorScheme.onSurface),
-                      decoration: inputDeco(l10n.newPassword, Icons.lock),
-                      obscureText: true,
+                      // On lie la variable booléenne ici
+                      obscureText: _obscurePassword,
+                      decoration: inputDeco(
+                        l10n.newPassword,
+                        Icons.lock,
+                        // Le bouton pour afficher/masquer
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
+                      ),
                       validator: (value) {
                         if (value == null || value.length < 8) {
                           return l10n.passwordTooShort;
@@ -135,12 +159,29 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     ),
                     const SizedBox(height: 20),
 
-                    // ✅ CHAMP PASSWORD 2
+                    // ✅ CHAMP PASSWORD 2 (CONFIRMATION)
                     TextFormField(
                       controller: _confirmPassCtrl,
                       style: TextStyle(color: theme.colorScheme.onSurface),
-                      decoration: inputDeco(l10n.confirmPassword, Icons.lock),
-                      obscureText: true,
+
+                      // On lie la deuxième variable booléenne
+                      obscureText: _obscureConfirmPassword,
+                      decoration: inputDeco(
+                        l10n.confirmPassword,
+                        Icons.lock,
+                        // Le bouton pour afficher/masquer (indépendant du premier)
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                            color: theme.colorScheme.onSurface.withOpacity(0.6),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscureConfirmPassword = !_obscureConfirmPassword;
+                            });
+                          },
+                        ),
+                      ),
                       validator: (value) {
                         if (value != _passCtrl.text) {
                           return l10n.passwordMismatch;
@@ -149,13 +190,13 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       },
                     ),
                     const SizedBox(height: 30),
+
                     ElevatedButton(
                       onPressed: _isLoading ? null : _resetPassword,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.primaryColor,
                         minimumSize: const Size(double.infinity, 50),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-
                       ),
                       child: Text(l10n.validate, style: const TextStyle(color: Colors.white)),
                     ),
@@ -166,7 +207,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
           ),
           if (_isLoading)
             Container(
-              color: theme.scaffoldBackgroundColor.withOpacity(0.8), // ✅
+              color: theme.scaffoldBackgroundColor.withOpacity(0.8),
               child: const CustomCircularLoader(),
             ),
         ],
