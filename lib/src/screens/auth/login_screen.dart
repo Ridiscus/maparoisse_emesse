@@ -527,82 +527,89 @@ class _LoginScreenState extends State<LoginScreen> {
                                   if (Platform.isIOS) ...[
                                     const SizedBox(height: 16),
 
-                                    SignInWithAppleButton(
-                                      text: "Se connecter avec Apple",
-                                      onPressed: () async {
-                                        // 1. 📸 CAPTURE DES RÉFÉRENCES (Le secret est ici !)
-                                        // On sauvegarde les outils de navigation AVANT de faire quoi que ce soit d'async
-                                        final navigator = Navigator.of(context);
-                                        final messenger = ScaffoldMessenger.of(context);
-                                        final auth = Provider.of<AuthService>(context, listen: false);
+                                    // --- BOUTON APPLE PERSONNALISÉ & ADAPTATIF ---
+                                    ElevatedButton(
+                                      // Logique du clic (inchangée)
+                                      onPressed: () {
+                                        if (!_isLoading) {
+                                          // 1. Capture des références
+                                          final navigator = Navigator.of(context);
+                                          final messenger = ScaffoldMessenger.of(context);
+                                          final auth = Provider.of<AuthService>(context, listen: false);
 
-                                        // 2. Lance le chargement
-                                        setState(() => _isLoading = true);
+                                          setState(() => _isLoading = true);
 
-                                        try {
-                                          // 3. Appel au service
-                                          bool success = await auth.signInWithApple();
+                                          // Lancer la logique async
+                                          (() async {
+                                            try {
+                                              bool success = await auth.signInWithApple();
 
-                                          // 4. Arrêt du chargement
-                                          if (mounted) setState(() => _isLoading = false);
+                                              if (mounted) setState(() => _isLoading = false);
 
-                                          // 5. Gestion du résultat
-                                          if (success) {
+                                              if (success) {
+                                                // messenger.showSnackBar(...) // Ton snackbar de succès (optionnel ici si tu rediriges vite)
 
-                                            // Petite pause pour laisser l'animation Apple finir
-                                            //await Future.delayed(const Duration(milliseconds: 500));
+                                                // Vérification Profil
+                                                bool missingInfo = (auth.phone == null || auth.phone!.isEmpty)
+                                                ||  (auth.civilite == null || auth.civilite!.isEmpty);
 
-                                            // ✅ UTILISATION DES RÉFÉRENCES CAPTURÉES
-                                            // On n'utilise plus 'context', on utilise 'messenger' et 'navigator' stockés
-
-                                            messenger.showSnackBar(
-                                              SnackBar(
-                                                content: Row(
-                                                  children: const [
-                                                    Icon(Icons.check_circle, color: Colors.white),
-                                                    SizedBox(width: 12),
-                                                    Text("Connexion Apple réussie", style: TextStyle(fontWeight: FontWeight.w600)),
-                                                  ],
-                                                ),
-                                                backgroundColor: Colors.green,
-                                                behavior: SnackBarBehavior.floating,
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                              ),
-                                            );
-
-                                            // Est-ce qu'il manque le téléphone OU la civilité ?
-                                            bool missingInfo = (auth.phone == null || auth.phone!.isEmpty)
-                                                || (auth.civilite == null || auth.civilite!.isEmpty);
-
-                                            if (missingInfo) {
-                                              print("Profil incomplet (Apple) -> Redirection vers CompleteProfile");
-                                              Navigator.pushReplacementNamed(context, '/complete_profile');
-                                            } else {
-                                              print("Profil complet (Apple) -> Redirection vers Dashboard");
-                                              Navigator.pushReplacementNamed(context, '/dashboard');
+                                                if (missingInfo) {
+                                                  navigator.pushReplacementNamed('/complete_profile');
+                                                } else {
+                                                  navigator.pushReplacementNamed('/dashboard');
+                                                }
+                                              } else {
+                                                messenger.showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text("Échec de la connexion Apple."),
+                                                    backgroundColor: Colors.red,
+                                                  ),
+                                                );
+                                              }
+                                            } catch (e) {
+                                              print("Erreur UI Apple: $e");
+                                              if (mounted) setState(() => _isLoading = false);
                                             }
-
-                                          } else {
-                                            // Échec
-                                            messenger.showSnackBar(
-                                              const SnackBar(
-                                                content: Text("Échec de la connexion Apple."),
-                                                backgroundColor: Colors.red,
-                                              ),
-                                            );
-                                          }
-                                        } catch (e) {
-                                          print("Erreur UI Apple: $e");
-
-                                        } finally {
-                                          if (mounted && _isLoading) {
-                                            setState(() => _isLoading = false);
-                                          }
+                                          })();
                                         }
                                       },
-                                      height: 50,
-                                      style: SignInWithAppleButtonStyle.black,
-                                      borderRadius: const BorderRadius.all(Radius.circular(12)),
+                                      // STYLE OFFICIEL APPLE (Noir, arrondi, hauteur 50)
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.black, // Fond Noir Apple
+                                        foregroundColor: Colors.white, // Texte Blanc
+                                        elevation: 0, // Apple Design est souvent plat
+                                        minimumSize: const Size(double.infinity, 50), // Même taille que Google
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+
+                                        ),
+                                      ),
+                                      // CONTENU DU BOUTON (ADAPTATIF)
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          // Icône Apple (Utilise l'icône native Flutter ou ton asset)
+                                          const Icon(Icons.apple, size: 28, color: Colors.white),
+
+                                          const SizedBox(width: 12),
+
+                                          // TEXTE ADAPTATIF
+                                          Flexible( // Permet au texte de rétrécir si besoin
+                                            child: FittedBox( // Force le texte à tenir sur une ligne en réduisant la taille
+                                              fit: BoxFit.scaleDown,
+                                              child: const Text(
+                                                "Se connecter avec Apple",
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w600,
+                                                  fontFamily: '-apple-system', // Police système iOS pour faire "Vrai"
+                                                  letterSpacing: 0.5,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ).animate().fadeIn(delay: 1000.ms).slideY(begin: 0.2),
                                   ],
 

@@ -234,20 +234,21 @@ class RequestDetailModal extends StatelessWidget {
 
 
 
+
+
   Widget _buildActionButtons(BuildContext context, String statut, Map<String, dynamic> request) {
     final l10n = AppLocalizations.of(context)!;
 
-    const statusEnAttente = 'en_attente_paiement';
-    const statusEnAttenteValidation = 'en attente'; // ✅ CELUI QU'ON AJOUTE
+    // Définition des statuts
+    const statusEnAttentePaiement = 'en_attente_paiement';
+    const statusEnAttenteValidation = 'en attente';
     const statusConfirme = 'confirmee';
     const statusCelebre = 'celebre';
 
     String statusLower = statut.toLowerCase();
 
-    // ✅ CORRECTION 1 : On force l'affichage si on est en mode succès
-    // ou si le statut est "en attente de paiement".
-    // On gère aussi le cas où le statut par défaut serait différent.
-    bool canPay = statusLower == statusEnAttente || isSuccessMode;
+    // Condition pour le paiement (reste inchangée)
+    bool canPay = statusLower == statusEnAttentePaiement || isSuccessMode;
 
     // --- CAS 1: En attente de paiement (ou Succès immédiat) ---
     if (canPay) {
@@ -269,63 +270,47 @@ class RequestDetailModal extends StatelessWidget {
               text: l10n.pay_now,
               icon: Icons.payment,
               onPressed: () {
-                // --- LOGIQUE DE PAIEMENT INTELLIGENTE ---
+
+                // --- 💰 NOUVELLE LOGIQUE : FRAIS FIXES DE 200 FCFA ---
 
                 final List<dynamic>? paiements = request['paiements'] as List?;
                 String referenceToUse = "REF_TEMP";
                 double montantOffrande = 0.0;
                 double montantTotal = 0.0;
-                double frais = 0.0;
 
-                // Récupération du montant de base (Offrande)
-                // On gère le cas String ou Int/Double
+                // ✅ 1. DÉFINITION DES FRAIS FIXES
+                double fraisFixes = 200.0;
+
+                // 2. Récupération de l'offrande de base
                 montantOffrande = double.tryParse(request['montant_offrande']?.toString() ?? '0') ?? 0;
 
-                // SCÉNARIO A : On a déjà des infos de paiement (Cas Liste)
+                // 3. Gestion de la référence (Cas Retry vs Cas Nouveau)
                 if (paiements != null && paiements.isNotEmpty) {
+                  // On reprend la référence existante si disponible
                   final Map<String, dynamic> paiement = paiements[0];
                   referenceToUse = paiement['reference'] ?? "REF_${request['id']}";
-                  montantTotal = double.tryParse(paiement['montant']?.toString() ?? '0') ?? 0;
-                }
-                // SCÉNARIO B : On vient de créer, pas de tableau paiement (Cas Succès)
-                else {
-                  // On simule une référence (CinetPay en générera une nouvelle de toute façon)
-                  referenceToUse = "MESSE_${request['id']}";
-                  // Par défaut, s'il n'y a pas de frais calculés, le total = l'offrande
-
-                  // --- CORRECTION : AJOUT MANUEL DES FRAIS ---
-                  // Ici, tu dois définir ta règle de calcul.
-                  // Si tu dis que c'est toujours 2 FCFA de plus, fais ceci :
-                  double fraisEstimes = 2.0;
-
-                  // OU SI C'EST UN POURCENTAGE (ex: 3.5%) :
-                  // double fraisEstimes = montantOffrande * 0.035;
-
-                  montantTotal = montantOffrande + fraisEstimes;
-                  // -------------------------------------------
-                }
-
-                // Calcul des frais si non définis
-                if (montantTotal > montantOffrande) {
-                  frais = montantTotal - montantOffrande;
                 } else {
-                  // Si on est dans le scénario B, on peut fixer des frais par défaut ici si tu veux
-                  // ex: frais = 0; montantTotal = montantOffrande;
+                  // Nouvelle référence
+                  referenceToUse = "MESSE_${request['id']}";
                 }
+
+                // ✅ 4. CALCUL DU TOTAL (On force la règle : Offrande + 200)
+                // Peu importe ce que dit le backend ou l'ancien calcul, on applique la règle actuelle.
+                montantTotal = montantOffrande + fraisFixes;
 
                 final int messeId = request['id'] is int
                     ? request['id']
                     : int.tryParse(request['id'].toString()) ?? 0;
 
-                // 4. Navigue vers l'écran de paiement
+                // 5. Navigation vers l'écran de paiement
                 Navigator.pushNamed(
                   context,
                   '/payment',
                   arguments: {
                     'typeIntention': request['motif_intention'],
                     'montant': montantOffrande,
-                    'frais': frais,
-                    'total': montantTotal,
+                    'frais': fraisFixes, // Affiche "200.0"
+                    'total': montantTotal, // Affiche "Offrande + 200.0"
                     'reference': referenceToUse,
                     'messeId': messeId,
                   },
@@ -338,16 +323,17 @@ class RequestDetailModal extends StatelessWidget {
     }
 
     // --- CAS 2: Confirmé, Célébré OU En attente de validation ---
-    // ✅ MODIFICATION ICI : On ajoute la condition || statusLower == statusEnAttenteValidation
     if (statusLower == statusConfirme ||
         statusLower == statusCelebre ||
         statusLower == statusEnAttenteValidation) {
+
       return Row(
         children: [
           Expanded(
             child: OutlinedButton(
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 14),
+
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               child: Text(l10n.close),
@@ -380,7 +366,7 @@ class RequestDetailModal extends StatelessWidget {
                         borderRadius: BorderRadius.circular(12)
                     ),
                     margin: EdgeInsets.only(
-                        bottom: screenHeight - 205,
+                        bottom: screenHeight - 165, // Ajusté pour ne pas être trop haut
                         left: 20,
                         right: 20
                     ),
