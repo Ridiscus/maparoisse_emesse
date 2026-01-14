@@ -176,6 +176,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
 
+    // 1. Récupère auth au début du build
+    final auth = Provider.of<AuthService>(context); // Supprime 'listen: false' pour réagir aux changements
+    bool isSocial = auth.isSocialUser;
+
+
     ImageProvider? profileImageProvider;
     if (_imageFile != null) {
       // 1. L'utilisateur a choisi un NOUVEAU fichier sur son téléphone
@@ -257,17 +262,22 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                     Positioned(
                       bottom: 0,
-                      right: -10, // Ajuste pour positionner l'icône
+                      right: -10,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryColor, // Ou une autre couleur
+                          color: isSocial ? Colors.grey : AppTheme.primaryColor, // Gris si désactivé
                           shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2), // Bordure blanche
+                          border: Border.all(color: Colors.white, width: 2),
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
-                          onPressed: _pickImage,
-                          tooltip: 'Changer la photo',
+                          icon: Icon(
+                              isSocial ? Icons.lock_outline : Icons.camera_alt, // Cadenas si désactivé
+                              color: Colors.white,
+                              size: 20
+                          ),
+                          // Si c'est un social user, on ne fait rien (null), sinon on ouvre la galerie
+                          onPressed: isSocial ? null : _pickImage,
+                          tooltip: isSocial ? 'Modification impossible (Google/Apple)' : 'Changer la photo',
                         ),
                       ),
                     ),
@@ -277,11 +287,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               const SizedBox(height: 30),
 
              // --- Champ Nom Complet ---
-              TextFormField(
-                controller: _nameController,
-                decoration: _buildInputDecoration(label: l10n.editProfileNameLabel, icon: Icons.person_outline),
-                validator: (value) => (value == null || value.isEmpty) ? l10n.editProfileNameError : null,
+            TextFormField(
+              controller: _nameController,
+              readOnly: isSocial, // Lecture seule si Google/Apple
+              decoration: _buildInputDecoration(label: l10n.editProfileNameLabel, icon: Icons.person_outline).copyWith(
+                // Fond grisé si désactivé
+                fillColor: isSocial ? Theme.of(context).colorScheme.onSurface.withOpacity(0.05) : null,
               ),
+            ),
               const SizedBox(height: 20),
 
               // --- Champ Email (Non modifiable) ---

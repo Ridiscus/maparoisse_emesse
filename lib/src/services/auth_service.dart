@@ -68,7 +68,37 @@ class AuthService extends ChangeNotifier {
   String? get username => _username;
   String? get email => _email;
   String? get phone => _phone;
-  String? get photoPath => _photoPath;
+
+
+  // ✅ REMPLACE LA LIGNE "String? get photoPath => _photoPath;" PAR CECI :
+
+  String? get photoPath {
+    // 1. Si vide, on renvoie null
+    if (_photoPath == null || _photoPath!.isEmpty) {
+      return null;
+    }
+
+    // 🚨 2. LE FIX "FRANKENSTEIN" (C'est ça qui répare ton erreur actuelle)
+    // Si l'URL contient ".../storage/https...", on coupe tout ce qu'il y a avant "https"
+    if (_photoPath!.contains('/storage/http')) {
+      // On trouve où commence le "http" imbriqué et on ne garde que la fin
+      int indexHttp = _photoPath!.indexOf('http', 5); // On cherche 'http' après les 5 premiers caractères
+      if (indexHttp != -1) {
+        return _photoPath!.substring(indexHttp);
+      }
+    }
+
+    // 3. Si c'est une URL Google/Apple propre (commence par http), on la renvoie telle quelle
+    if (_photoPath!.startsWith('http')) {
+      return _photoPath;
+    }
+
+    // 4. Sinon, c'est une image locale (ex: "profiles/toto.jpg"), on ajoute ton serveur
+    String cleanPath = _photoPath!.startsWith('/') ? _photoPath!.substring(1) : _photoPath!;
+    return "https://e-messe-ci.com/storage/$cleanPath";
+  }
+
+
   String? get civilite => _civilite;
   bool _estBaptise = false;
   // 'get password' est supprimé
@@ -176,7 +206,7 @@ class AuthService extends ChangeNotifier {
   }
 
 
-  /// REFACTORISÉ : Inscription avec Gestion Erreurs (Internet / Timeout)
+
   Future<bool> register({
     required String fullName,
     required String username,
@@ -190,6 +220,12 @@ class AuthService extends ChangeNotifier {
 
     try {
       var request = http.MultipartRequest('POST', url);
+
+      // ✅ 1. HEADER IMPORTANT : Force le serveur à répondre en JSON
+      request.headers.addAll({
+        'Accept': 'application/json',
+        'Content-Type': 'multipart/form-data',
+      });
 
       // Champs texte
       request.fields['name'] = fullName;
@@ -206,21 +242,30 @@ class AuthService extends ChangeNotifier {
         request.files.add(file);
       }
 
-      // --- ENVOI AVEC TIMEOUT (30s pour l'image) ---
+      print("--- Envoi Inscription vers $url ---");
+
+      // Envoi avec Timeout
       var streamedResponse = await request.send().timeout(const Duration(seconds: 30));
       var response = await http.Response.fromStream(streamedResponse);
 
-      final data = jsonDecode(response.body);
+      print("Register Status: ${response.statusCode}");
+      print("Register Body: ${response.body}"); // Pour le debug
 
-      // --- CAS 1 : SUCCÈS ---
+      // --- CAS 1 : SUCCÈS (200 ou 201) ---
       if (response.statusCode == 201 || response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        // Note: Vérifie si ton API renvoie 'token' ou 'access_token'
+        // Je mets une sécurité pour prendre l'un ou l'autre
+        String token = data['access_token'] ?? data['token'];
+
         await _saveAuthData(
-          token: data['token'],
+          token: token,
           user: data['user'],
           civilite: civilite,
         );
 
-        // FCM Token
+        // FCM Token (Non bloquant)
         try {
           final String? fcmToken = await _notificationService.initializeAndGetToken();
           if (fcmToken != null) {
@@ -232,33 +277,42 @@ class AuthService extends ChangeNotifier {
 
         return true;
       }
-      // --- CAS 2 : ERREUR VALIDATION (422) ou AUTRE ---
-      else {
-        // On essaie de récupérer le premier message d'erreur précis
-        String message = data['message'];
+
+      // --- CAS 2 : ERREUR DE VALIDATION (422) ---
+      // C'est ici qu'on attrape "Email has already been taken"
+      else if (response.statusCode == 422) {
+        final data = jsonDecode(response.body);
+        String message = data['message'] ?? "Erreur de validation";
+
+        // Si l'API renvoie des détails précis (ex: Laravel)
         if (data['errors'] != null && data['errors'] is Map) {
-          // Ex: "L'email est déjà pris"
           final errors = data['errors'] as Map<String, dynamic>;
           if (errors.isNotEmpty) {
-            // Prend la première erreur de la liste
-            final firstKey = errors.keys.first;
-            final firstErrorList = errors[firstKey];
+            // On prend la première erreur de la liste
+            final firstKey = errors.keys.first; // ex: "email"
+            final firstErrorList = errors[firstKey]; // ex: ["The email has already been taken."]
             if (firstErrorList is List && firstErrorList.isNotEmpty) {
               message = firstErrorList.first;
             }
           }
         }
-        throw Exception(message); // On renvoie l'erreur précise au front
+
+        throw Exception(message); // On renvoie le message précis (ex: "Email déjà pris")
+      }
+
+      // --- CAS 3 : AUTRES ERREURS (500, 404, etc.) ---
+      else {
+        // On évite de décoder le JSON ici car ça peut être du HTML (Erreur serveur)
+        throw Exception("Erreur serveur (${response.statusCode}). Veuillez réessayer plus tard.");
       }
 
     } on SocketException catch (_) {
-      // ⚠️ CAS 3 : PAS D'INTERNET
       throw Exception('Pas de connexion Internet. Vérifiez votre réseau.');
     } on TimeoutException catch (_) {
-      // ⚠️ CAS 4 : TIMEOUT (Souvent à cause de l'image trop lourde ou réseau lent)
-      throw Exception('Le serveur met trop de temps à répondre. Votre connexion est peut-être trop lente pour envoyer l\'image.');
+      throw Exception('Le serveur met trop de temps à répondre. Votre connexion est peut-être trop lente.');
     } catch (e) {
       print("Erreur Register (Catch): $e");
+      // On nettoie le "Exception: " pour l'affichage
       throw Exception(e.toString().replaceAll('Exception: ', ''));
     }
   }

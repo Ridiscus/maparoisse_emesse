@@ -32,7 +32,11 @@ class RequestDetailModal extends StatelessWidget {
     final String formattedDateTime = _formatModalDateTime(date, time);
     final String celebration = request['celebration_choisie'] ?? 'N/A';
     // On gère le cas où le montant est un int ou un string
-    final String montant = request['montant_offrande']?.toString() ?? '0';
+
+    // ✅ APRÈS : Affiche "2 000 FCFA" (Propre)
+    double rawMontant = double.tryParse(request['montant_offrande']?.toString() ?? '0') ?? 0;
+    final String montant = NumberFormat.decimalPattern('fr_FR').format(rawMontant);
+
     final String intercesseur = request['interception_par'] ?? 'Non spécifié';
     final String statut = request['statut'] ?? 'En attente'; // Statut par défaut
     final List<dynamic>? paiements = request['paiements'] as List?;

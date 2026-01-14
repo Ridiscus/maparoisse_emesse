@@ -382,11 +382,15 @@ class _RegisterScreenState extends State<RegisterScreen>
       }
 
     } catch (e) {
-      // --- GESTION ERREUR (Internet, Email pris, etc.) ---
+      // --- GESTION ERREUR AMÉLIORÉE ---
       if (mounted) {
-        // Nettoie le message d'erreur
-        String errorMessage = e.toString().replaceAll('Exception: ', '');
-        _showError(errorMessage);
+        // On récupère le message brut
+        String rawError = e.toString();
+
+        // On le traduit en langage humain
+        String friendlyMessage = _getFriendlyErrorMessage(rawError);
+
+        _showError(friendlyMessage);
       }
     } finally {
       if (mounted) {
@@ -435,6 +439,39 @@ class _RegisterScreenState extends State<RegisterScreen>
         ),
       ),
     );
+  }
+
+
+  // --- HELPER DE TRADUCTION D'ERREURS ---
+  String _getFriendlyErrorMessage(String technicalError) {
+    String error = technicalError.toLowerCase();
+
+    // 1. Erreurs d'email / Compte existant
+    if (error.contains("email") && (error.contains("taken") || error.contains("existe") || error.contains("déjà"))) {
+    return "Cet email est déjà utilisé. Essayez de vous connecter.";
+    }
+    if (error.contains("username") && (error.contains("taken") || error.contains("existe"))) {
+    return "Ce nom d'utilisateur est déjà pris.";
+    }
+
+    // 2. Erreurs techniques (HTML, FormatException)
+    // C'est ce qui arrive quand le serveur plante ou renvoie une page web
+    if (error.contains("format") || error.contains("unexpected character") || error.contains("<!doctype html>")) {
+    return "Problème technique temporaire avec le serveur. Veuillez réessayer plus tard.";
+    }
+
+    // 3. Erreurs réseau
+    if (error.contains("socket") || error.contains("connection") || error.contains("network")) {
+    return "Impossible de joindre le serveur. Vérifiez votre connexion Internet.";
+    }
+
+    // 4. Erreurs de mot de passe (si le backend les renvoie)
+    if (error.contains("password") && error.contains("match")) {
+    return "Les mots de passe ne correspondent pas.";
+    }
+
+    // 5. Fallback : On nettoie juste le préfixe "Exception:"
+    return technicalError.replaceAll('Exception: ', '').replaceAll('FormatExcepton: ', '');
   }
 
 
@@ -707,7 +744,11 @@ class _RegisterScreenState extends State<RegisterScreen>
 
     } catch (error) {
       print('Erreur Google Sign Up: $error');
-      if (mounted) _showError(l10n.loginErrorGoogleGeneric);
+      if (mounted) {
+        // Tu peux utiliser ton helper ici aussi
+        String msg = _getFriendlyErrorMessage(error.toString());
+        _showError(msg);
+      }
       await _googleSignIn.signOut();
     } finally {
       if (mounted) setState(() => _isGoogleLoading = false);
@@ -717,6 +758,7 @@ class _RegisterScreenState extends State<RegisterScreen>
   // ------------------------------------------------------------------------
   // 2. GESTION APPLE (COPIE EXACTE DU LOGIN ADAPTÉE)
   // ------------------------------------------------------------------------
+
   Future<void> _handleAppleSignUp() async {
     if (_isLoading) return;
 
@@ -731,7 +773,7 @@ class _RegisterScreenState extends State<RegisterScreen>
       if (mounted) setState(() => _isLoading = false);
 
       if (success) {
-        // Pause technique pour iOS (Indispensable pour éviter le crash de nav)
+        // Pause technique pour iOS
         await Future.delayed(const Duration(milliseconds: 500));
 
         if (!mounted) return;
@@ -756,11 +798,10 @@ class _RegisterScreenState extends State<RegisterScreen>
         );
 
         // --- LOGIQUE DE REDIRECTION INTELLIGENTE ---
-        // On utilise 'auth' (défini au début) pour vérifier les infos
-
         // Est-ce qu'il manque le téléphone OU la civilité ?
+        // ✅ J'ai corrigé les '||' manquants ci-dessous
         bool missingInfo = (auth.phone == null || auth.phone!.isEmpty)
-         || (auth.civilite == null || auth.civilite!.isEmpty);
+        ||  (auth.civilite == null || auth.civilite!.isEmpty);
 
         if (missingInfo) {
           print("Profil incomplet (Apple) -> Redirection vers CompleteProfile");
@@ -771,14 +812,22 @@ class _RegisterScreenState extends State<RegisterScreen>
         }
 
       } else {
-        // Échec silencieux (Annulation utilisateur)
+        // Échec silencieux (L'utilisateur a annulé la fenêtre Apple)
+        // On ne fait rien, on ne montre pas d'erreur rouge, c'est normal.
       }
     } catch (e) {
       print("Erreur Apple Sign Up: $e");
+
+      // ✅ CATCH ADAPTÉ AVEC TON HELPER
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Erreur lors de la connexion Apple."), backgroundColor: Colors.red),
-        );
+        // 1. On ignore l'erreur si c'est une annulation utilisateur (Code 1001 ou "Canceled")
+        if (e.toString().contains("AuthorizationErrorCode.canceled") || e.toString().contains("1001")) {
+          return;
+        }
+
+        // 2. Sinon, on traduit et on affiche
+        String msg = _getFriendlyErrorMessage(e.toString());
+        _showError(msg);
       }
     } finally {
       if (mounted && _isLoading) setState(() => _isLoading = false);

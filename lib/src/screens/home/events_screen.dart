@@ -42,6 +42,7 @@ class EventModel {
   // Renommée en 'fromJson' (au lieu de fromListJson)
   // Gère les données de la LISTE et du DÉTAIL
   factory EventModel.fromJson(Map<String, dynamic> json) {
+    String? rawUrl = _fixImageUrl(json['image_url']);
     return EventModel(
       id: json['id'],
       titre: json['titre'] ?? 'Sans titre',
@@ -52,10 +53,14 @@ class EventModel {
       lieu: json['lieu'] ?? 'Lieu inconnu',
       celebrant: json['celebrant'],
       participationFrais: json['participation_frais'] ?? '0.00',
-      imageUrl: _fixImageUrl(json['image_url']),
+      //imageUrl: _fixImageUrl(json['image_url']),
+      imageUrl: rawUrl, // On garde null si pas d'image
       parishName: json['paroisse']?['name'] ?? 'Paroisse inconnue',
     );
   }
+
+
+
   // --- FIN CORRECTION ---
 
   // Helper pour corriger les URL en 127.0.0.1
@@ -309,8 +314,8 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
         actions: [
           IconButton(
             icon: Icon(Icons.settings_outlined,
-                color: Theme.of(context).colorScheme.onSurface,
-                size: 23,
+              color: Theme.of(context).colorScheme.onSurface,
+              size: 23,
             ),
             onPressed: () {
               Navigator.pushNamed(context, '/parametres');
@@ -320,10 +325,10 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
       ),
       body: Column(
         children: [
-          // Le calendrier reste en haut
+          // Le calendrier
           _buildCalendar(),
 
-          // Affiche le TabBar seulement si on ne charge pas (ou si c'est un refresh)
+          // Affiche le TabBar seulement si on ne charge pas
           _isLoading
               ? const Padding(
             padding: EdgeInsets.symmetric(vertical: 20.0),
@@ -334,36 +339,56 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
           // La zone principale
           Expanded(
             child: _isLoading
-                ? const Center() // Loader déjà affiché au-dessus
+                ? const Center()
                 : TabBarView(
               controller: _tabController,
               children: _tabs.map((tabName) {
-                // 1. LOGIQUE DE FILTRE
-                List<EventModel> filteredEvents;
+
+                // --- 1. FILTRE PAR TYPE (ONGLET) ---
+                List<EventModel> eventsByType;
                 if (tabName == "Tous") {
-                  filteredEvents = _allEvents;
+                  eventsByType = _allEvents;
                 } else {
-                  filteredEvents = _allEvents.where((event) {
-                    return event.typeEvent == tabName;
-                  }).toList();
+                  eventsByType = _allEvents.where((event) => event.typeEvent == tabName).toList();
                 }
 
-                // 2. INTÉGRATION DU REFRESH INDICATOR
+                // --- 2. FILTRE PAR DATE SÉLECTIONNÉE ---
+                List<EventModel> finalEvents; // C'est la liste qu'on va afficher
+
+                if (_selectedDay != null) {
+                  finalEvents = eventsByType.where((event) {
+                    // Normalisation des dates (on retire les heures/minutes pour comparer juste le jour)
+                    final eventStart = DateTime(event.dateDebut.year, event.dateDebut.month, event.dateDebut.day);
+                    final eventEnd = DateTime(event.dateFin.year, event.dateFin.month, event.dateFin.day);
+                    final selectedDate = DateTime(_selectedDay!.year, _selectedDay!.month, _selectedDay!.day);
+
+                    // ✅ CORRECTION SYNTAXE : Ajout des || (OU)
+                    return (isSameDay(eventStart, selectedDate) ||
+                        isSameDay(eventEnd, selectedDate) ||
+                        (selectedDate.isAfter(eventStart) && selectedDate.isBefore(eventEnd)));
+                  }).toList();
+                } else {
+                  // Si aucune date n'est sélectionnée (ou aujourd'hui par défaut), on affiche tout ce qui est dans l'onglet
+                  finalEvents = eventsByType;
+                }
+
+                // --- 3. AFFICHAGE ---
                 return RefreshIndicator(
-                  onRefresh: _handleRefresh, // Appelle ta fonction
+                  onRefresh: _handleRefresh,
                   color: const Color(0xFFC0A040),
                   backgroundColor: Theme.of(context).cardTheme.color,
 
-                  // Si la liste est vide, on met une ListView scrollable pour permettre le refresh
-                  child: filteredEvents.isEmpty
+                  // ✅ CORRECTION VARIABLE : On utilise 'finalEvents' ici
+                  child: finalEvents.isEmpty
                       ? ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
+
                     children: [
                       SizedBox(
                         height: MediaQuery.of(context).size.height * 0.4,
                         child: Center(
                           child: Text(
-                            l10n.events_none,
+                            l10n.events_none, // "Aucun événement trouvé"
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                             ),
@@ -373,15 +398,12 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
                     ],
                   )
                       : ListView.builder(
-                    // CRUCIAL : AlwaysScrollableScrollPhysics pour que le geste fonctionne tout le temps
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(16),
-                    itemCount: filteredEvents.length,
+                    itemCount: finalEvents.length,
                     itemBuilder: (context, index) {
-                      // Ici on utilise ta fonction existante pour créer la carte
-
-// Si _buildEventCard prend un EventModel, c'est parfait.
-                      return _buildEventCard(filteredEvents[index]);
+                      // On affiche la carte
+                      return _buildEventCard(finalEvents[index]);
                     },
                   ),
                 );
@@ -392,7 +414,6 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
       ),
     );
   }
-
 
 
 
@@ -424,14 +445,21 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
         // -------------------------------------------
 
         selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+
+        // Dans _buildCalendar
         onDaySelected: (selectedDay, focusedDay) {
           if (!isSameDay(_selectedDay, selectedDay)) {
             setState(() {
               _selectedDay = selectedDay;
               _focusedDay = focusedDay;
+              // Pas besoin de recharger l'API, on filtre juste la liste locale
             });
           }
         },
+
+        // IMPORTANT : Ajoute ceci pour afficher les petits points (markers) sous les dates qui ont des événements
+        eventLoader: _getEventsForDay,
+
         onFormatChanged: (format) {
           if (_calendarFormat != format) {
             setState(() => _calendarFormat = format);
@@ -636,6 +664,33 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
 
 
 
+
+  // Filtre les événements pour un jour donné
+  List<EventModel> _getEventsForDay(DateTime day) {
+    // On retourne tous les événements qui COMMENCENT ou FINISSENT ce jour-là,
+    // OU qui englobent ce jour-là (événement sur plusieurs jours).
+    return _allEvents.where((event) {
+      // On normalise les dates (sans les heures) pour comparer juste les jours
+      final eventStart = DateTime(event.dateDebut.year, event.dateDebut.month, event.dateDebut.day);
+      final eventEnd = DateTime(event.dateFin.year, event.dateFin.month, event.dateFin.day);
+      final selectedDate = DateTime(day.year, day.month, day.day);
+
+      // Cas 1 : L'événement commence ou finit exactement ce jour-là
+      if (isSameDay(eventStart, selectedDate) || isSameDay(eventEnd, selectedDate)) {
+        return true;
+      }
+
+      // Cas 2 : La date sélectionnée est ENTRE le début et la fin (ex: du 10 au 15, on clique sur le 12)
+      if (selectedDate.isAfter(eventStart) && selectedDate.isBefore(eventEnd)) {
+        return true;
+      }
+
+      return false;
+    }).toList();
+  }
+
+
+
   Widget _buildEventCard(EventModel event) {
     final theme = Theme.of(context);
     final DateFormat dateFormat = DateFormat('EEE d MMM yyyy', 'fr_FR');
@@ -668,15 +723,22 @@ class _EventsScreenState extends State<EventsScreen> with TickerProviderStateMix
                 child: SizedBox(
                   height: 150,
                   width: double.infinity,
-                  child: Image.network(
-                    event.imageUrl ?? 'https://via.placeholder.com/400x200', // Image par défaut
+                  child: (event.imageUrl != null && event.imageUrl!.isNotEmpty)
+                      ? Image.network(
+                    event.imageUrl!,
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        color: theme.colorScheme.surfaceVariant,
-                        child: Icon(Icons.image_not_supported, color: theme.colorScheme.onSurfaceVariant),
+                      // En cas d'erreur de chargement réseau, on met l'image par défaut
+                      return Image.asset(
+                        'assets/images/quote_bg_8.jpg', // Ton image par défaut
+                        fit: BoxFit.cover,
                       );
                     },
+                  )
+                      : Image.asset(
+                    // Si l'URL est nulle ou vide, on met l'image par défaut direct
+                    'assets/images/quote_bg_8.jpg',
+                    fit: BoxFit.cover,
                   ),
                 ),
               ),

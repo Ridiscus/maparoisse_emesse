@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'dashboard_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:maparoisse/src/app_themes.dart';
@@ -32,6 +33,8 @@ class PaymentPage extends StatefulWidget {
 class _PaymentPageState extends State<PaymentPage> {
   // On utilise un seul état de chargement car tout passe par CinetPay
   bool _isLoading = false;
+
+  final format = NumberFormat.decimalPattern('fr_FR');
 
   late final AppLinks _appLinks;
   StreamSubscription<Uri>? _sub;
@@ -169,12 +172,15 @@ class _PaymentPageState extends State<PaymentPage> {
                         const SizedBox(height: 20),
                         _buildRecapRow("Type d'intention", widget.typeIntention),
                         const Divider(height: 24),
-                        _buildRecapRow("Montant", "${widget.montant} FCFA"),
-                        _buildRecapRow("Frais", "${widget.frais} FCFA"),
+
+                        _buildRecapRow("Montant", "${format.format(widget.montant)} FCFA"),
+                        _buildRecapRow("Frais", "${format.format(widget.frais)} FCFA"), // Affiche "200 FCFA"
+
+
                         const SizedBox(height: 12),
                         _buildRecapRow(
                           "Total à payer",
-                          "${widget.total} FCFA",
+                          "${format.format(widget.total)} FCFA", // Affiche "2 200 FCFA"
                           bold: true,
                           color: AppTheme.primaryColor,
                           fontSize: 20,

@@ -151,7 +151,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _buildSettingsCard(
                       title: l10n.settingsNotificationsSectionTitle,
                       children: [
-                        _buildSwitchItem(
+                       /* _buildSwitchItem(
                           icon: Icons.sms_outlined,
                           text: l10n.settingsSmsNotifications,
                           value: _smsEnabled,
@@ -159,9 +159,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             setState(() => _smsEnabled = value);
                             _saveNotificationSetting(_keySmsEnabled, value); // Sauvegarde
                           },
-                        ),
-                        const Divider(height: 1),
-                        _buildSwitchItem(
+                        ), */
+                        /*const Divider(height: 1),*/
+                        /*_buildSwitchItem(
                           icon: Icons.email_outlined,
                           text: l10n.settingsEmailNotifications,
 
@@ -169,7 +169,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           onChanged: (value) { setState(() => _emailEnabled = value);
                           _saveNotificationSetting(_keyEmailEnabled, value); // Sauvegarde
                           },
-                        ),
+                        ),*/
                         const Divider(height: 1),
                         _buildSwitchItem(
                           icon: Icons.notifications_active_outlined,

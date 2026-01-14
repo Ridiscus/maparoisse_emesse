@@ -17,7 +17,7 @@ import 'package:maparoisse/src/screens/home/identification_screen.dart';
 import 'package:in_app_update/in_app_update.dart';
 import 'package:upgrader/upgrader.dart';
 import 'dart:io';
-
+import 'package:text_scroll/text_scroll.dart';
 
 class HomeScreen extends StatefulWidget {
   // Garde les callbacks si tu en as besoin pour la navigation depuis HomeScreen
@@ -584,152 +584,157 @@ class _HomeScreenState extends State<HomeScreen> {
 
 
 
-Widget _buildAppBarContent(BuildContext context) {
-  final l10n = AppLocalizations.of(context)!;
+  Widget _buildAppBarContent(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
 
-  return Row(
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: [
-      // --- WRAPPER CLICABLE POUR L'AVATAR ET STATUT ---
-      InkWell(
-        onTap: () {
-          // Navigue vers l'écran de modification du profil
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const EditProfileScreen()),
-          );
-          print('Avatar tapped, navigating to Edit Profile');
-        },
-        // Optionnel: Rendre l'effet d'ondulation circulaire si tu préfères
-        // customBorder: const CircleBorder(),
-        // Ou laisse rectangulaire pour inclure le texte "En ligne"
-        borderRadius: BorderRadius.circular(8), // Léger arrondi pour l'effet
-        child: Padding( // Ajoute un léger padding pour l'effet d'ondulation
-          padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
-          child: Column(
-            children: [
-              CircleAvatar(
-                radius: 30,
-                backgroundColor: Colors.grey[200],
-                backgroundImage: (_userAvatarUrl != null && _userAvatarUrl!.isNotEmpty)
-                    ? NetworkImage(_userAvatarUrl!)
-                    : null,
-                child: (_userAvatarUrl == null || _userAvatarUrl!.isEmpty)
-                    ? const Icon(Icons.person, size: 30, color: Colors.grey)
-                    : null,
-              ),
-              const SizedBox(height: 4),
-              // --- DÉBUT MODIFICATION ---
-              Text(
-                l10n.online,
-                style: TextStyle(
-                  fontSize: 10,
-                  // Petit bonus : GreenAccent ressort mieux en mode sombre que green[600]
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Colors.greenAccent
-                      : Colors.green[600],
-                  fontWeight: FontWeight.bold,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // --- 1. AVATAR (Inchangé) ---
+        InkWell(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+            );
+          },
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 2.0),
+            child: Column(
+              children: [
+                CircleAvatar(
+                  radius: 30,
+                  backgroundColor: Colors.grey[200],
+                  backgroundImage: (_userAvatarUrl != null && _userAvatarUrl!.isNotEmpty)
+                      ? NetworkImage(_userAvatarUrl!)
+                      : null,
+                  child: (_userAvatarUrl == null || _userAvatarUrl!.isEmpty)
+                      ? const Icon(Icons.person, size: 30, color: Colors.grey)
+                      : null,
                 ),
-              )
-                  .animate(
-                onPlay: (controller) => controller.repeat(reverse: true), // Boucle infinie aller-retour
-              )
-                  .fade(
-                duration: 1000.ms, // Durée d'un cycle (1 seconde)
-                begin: 0.4, // Commence à 40% d'opacité
-                end: 1.0,   // Finit à 100% d'opacité
+                const SizedBox(height: 4),
+                Text(
+                  l10n.online,
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.greenAccent
+                        : Colors.green[600],
+                    fontWeight: FontWeight.bold,
+                  ),
+                )
+                    .animate(onPlay: (c) => c.repeat(reverse: true))
+                    .fade(duration: 1000.ms, begin: 0.4, end: 1.0),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(width: 12),
+
+        // --- 2. TEXTE DÉFILANT (C'est ici que ça change !) ---
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center, // Centre verticalement
+            children: [
+              // ✅ REMPLACEMENT DU TEXT PAR TEXTSCROLL
+              TextScroll(
+                l10n.welcomeUser(_userName), // Ton texte
+
+                // Mode : Défile à l'infini
+                mode: TextScrollMode.endless,
+
+                // Vitesse : Plus le chiffre est petit, plus c'est lent
+                velocity: const Velocity(pixelsPerSecond: Offset(30, 0)),
+
+                // Pause avant de commencer à défiler (pour laisser lire le début)
+                delayBefore: const Duration(milliseconds: 1000),
+
+                // Pause avant de recommencer la boucle
+                pauseBetween: const Duration(milliseconds: 2000),
+
+                // Style du texte (inchangé)
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontSize: 20,
+                ),
+
+                // Alignement du texte
+                textAlign: TextAlign.left,
+
+                // Est-ce qu'on peut sélectionner le texte ? Non.
+                selectable: true,
               ),
-              // --- FIN MODIFICATION ---
+
+              const SizedBox(height: 2),
+
+              // Message de paix (inchangé)
+              Text(
+                l10n.peaceMessage,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                  fontSize: 12,
+                ),
+                maxLines: 1, // Sécurité
+                overflow: TextOverflow.ellipsis,
+              ),
             ],
           ),
         ),
-      ),
-      // --- FIN WRAPPER ---
-      const SizedBox(width: 12),
-      // Textes de bienvenue (inchangés)
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ... (Text 'Bienvenue' et 'Que la paix...')
-            Text(
-              l10n.welcomeUser(_userName),
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface,
-                fontSize: 20, // Tu peux remettre si besoin
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              l10n.peaceMessage, // TODO: Localiser si nécessaire
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                fontSize: 12,
-              ),
-            ),
-          ],
+
+        const SizedBox(width: 4),
+
+        // --- 3. BOUTONS PARAMÈTRES & NOTIFICATIONS (Inchangés) ---
+        IconButton(
+          icon: Icon(Icons.settings_outlined, color: Theme.of(context).colorScheme.onSurface, size: 28),
+
+          tooltip: l10n.settings,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SettingsScreen()),
+            );
+          },
         ),
-      ),
-      const SizedBox(width: 4),
 
-
-      // --- 3. NOUVELLE ICÔNE PARAMÈTRES (DROITE) ---
-      IconButton(
-        icon: Icon(Icons.settings_outlined, color: Theme.of(context).colorScheme.onSurface, size: 28),
-        tooltip: l10n.settings,
-        onPressed: () {
-          // Navigation vers SettingsScreen
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const SettingsScreen()),
-          );
-        },
-      ),
-      // Cloche de notification (inchangée)
-      // 1. On utilise un Consumer pour écouter les changements
-      Consumer<AuthService>(
-        builder: (context, authService, child) {
-
-          // 2. On utilise un Stack pour superposer le point rouge
-          return Stack(
-            alignment: Alignment.center,
-            children: [
-              // Le bouton icône
-              IconButton(
-                icon: Icon(Icons.notifications_outlined, color: Theme.of(context).colorScheme.onSurface, size: 28),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const NotificationsScreen()),
-                  );
-                  print('Notifications tapped');
-                },
-              ),
-
-              // 3. Le point rouge (conditionnel)
-              if (authService.hasUnreadNotifications)
-                Positioned(
-                  top: 10, // Ajuste la position verticale
-                  right: 10, // Ajuste la position horizontale
-                  child: Container(
-                    width: 10, // Taille du point
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 1.5), // Petite bordure blanche
+        Consumer<AuthService>(
+          builder: (context, authService, child) {
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.notifications_outlined, color: Theme.of(context).colorScheme.onSurface, size: 28),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const NotificationsScreen()),
+                    );
+                  },
+                ),
+                if (authService.hasUnreadNotifications)
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1.5),
+                      ),
                     ),
                   ),
-                ),
-            ],
-          );
-        },
-      )
-    ],
-  );
-}
+              ],
+            );
+          },
+        )
+      ],
+    );
+  }
 
 
 

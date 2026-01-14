@@ -268,6 +268,35 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
   }
 
 
+  // --- NOUVEAU : Affiche la photo en plein écran (Style WhatsApp) ---
+  void _viewFullImage(ImageProvider? imageProvider) {
+    if (imageProvider == null) return; // Si pas d'image, on ne fait rien
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => Scaffold(
+          backgroundColor: Colors.black,
+          appBar: AppBar(
+            backgroundColor: Colors.black,
+            iconTheme: const IconThemeData(color: Colors.white),
+            elevation: 0,
+          ),
+          body: Center(
+            child: Hero(
+              tag: 'profile_photo_hero', // Le tag doit correspondre à celui de la petite photo
+              child: Image(
+                image: imageProvider,
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+
 
   Future<void> _submitForm() async {
     if (_formKey.currentState!.validate()) {
@@ -379,9 +408,13 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
 
 
 
+
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context); // Gestion de l'affichage de l'image (Fichier local OU Réseau OU Défaut)
+    final theme = Theme.of(context);
+
+    // Gestion de l'image (identique à avant)
     ImageProvider? imageProvider;
     if (_imageFile != null) {
       imageProvider = FileImage(_imageFile!);
@@ -404,21 +437,34 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- SECTION PHOTO DYNAMIQUE ---
+
+              // --- SECTION PHOTO (MODIFIÉE) ---
               Center(
                 child: Stack(
                   children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.grey[200],
-                      backgroundImage: imageProvider, // Affiche l'image si elle existe
-                      child: imageProvider == null
-                          ? const Icon(Icons.person, size: 50, color: Colors.grey)
-                          : null,
+                    // 1. Rendre la photo cliquable
+                    GestureDetector(
+                      onTap: () => _viewFullImage(imageProvider),
+                      child: Hero(
+                        tag: 'profile_photo_hero', // Tag pour l'animation zoom
+                        child: Container(
+                          width: 100, // equivalent radius 50 * 2
+                          height: 100,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.grey[200],
+                            image: imageProvider != null
+                                ? DecorationImage(image: imageProvider, fit: BoxFit.cover)
+                                : null,
+                          ),
+                          child: imageProvider == null
+                              ? const Icon(Icons.person, size: 50, color: Colors.grey)
+                              : null,
+                        ),
+                      ),
                     ),
 
-                    // ✅ 1. L'ÉTIQUETTE BAPTISÉ
-                    // On vérifie si l'info est DÉJÀ enregistrée dans AuthService
+                    // 2. L'ÉTIQUETTE BAPTISÉ (Inchangée)
                     if (Provider.of<AuthService>(context).isBaptized)
                       Positioned(
                         top: -5,
@@ -445,43 +491,63 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
                         ),
                       ),
 
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: CircleAvatar(
-                        backgroundColor: const Color(0xFFC0A040),
-                        radius: 18,
-                        child: IconButton(
-                          icon: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
-                          onPressed: _pickImage, // Ouvre la galerie
+                    // ❌ L'ICÔNE CAMÉRA A ÉTÉ RETIRÉE ICI
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 12),
+              // Petit texte indicatif optionnel
+              if (imageProvider != null)
+                Center(child: Text("Appuyez pour agrandir", style: TextStyle(fontSize: 12, color: Colors.grey))),
+
+              const SizedBox(height: 24),
+
+              // ✅ NOUVEAU BANNEAU D'INFORMATION
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  // Fond Ocre très léger pour le style
+                  color: const Color(0xFFC0A040).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  // Petite bordure fine
+                  border: Border.all(color: const Color(0xFFC0A040).withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.info_outline, color: Color(0xFFC0A040)),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        "Remplissez ce formulaire pour compléter votre identification paroissiale.",
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface.withOpacity(0.8),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
+              // ✅ FIN DU BANNEAU
+
               const SizedBox(height: 24),
 
-              // --- CHAMPS PRÉ-REMPLIS ---
+              // --- LE RESTE DU FORMULAIRE (INCHANGÉ) ---
               _buildTextField("Nom & Prénoms", _nomPrenomsCtrl),
               const SizedBox(height: 16),
-
               _buildDateSelector("Date de naissance", _dateNaissance, true),
               const SizedBox(height: 16),
-
               _buildDropdown("Sexe", _sexe, _sexes, (val) => setState(() => _sexe = val)),
               const SizedBox(height: 16),
-
               _buildDropdown("Situation Matrimoniale", _situationMatrimoniale, _situations, (val) => setState(() => _situationMatrimoniale = val)),
               const SizedBox(height: 16),
-
               _buildTextField("Adresse (Lieu d'Habitation)", _lieuHabitationCtrl),
               const SizedBox(height: 16),
-
               _buildDropdown("Statut d'Activité", _statutActivite, _activites, (val) => setState(() => _statutActivite = val)),
               const SizedBox(height: 16),
-
-              // --- PAROISSE ---
               DropdownButtonFormField<int>(
                 decoration: InputDecoration(
                   labelText: "Nom de sa paroisse",
@@ -500,9 +566,9 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
                 validator: (val) => val == null ? 'Veuillez sélectionner une paroisse' : null,
               ),
               const SizedBox(height: 16),
-
               _buildTextField("Numéro de téléphone", _telephoneCtrl, keyboardType: TextInputType.phone),
-              const SizedBox(height: 16),  // --- MOUVEMENT ---
+              const SizedBox(height: 16),
+
               SwitchListTile(
                 title: const Text("Êtes-vous dans un mouvement ?"),
                 value: _isInMovement,
@@ -518,7 +584,6 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
 
               const Divider(),
 
-              // --- 2. NOUVELLE LOGIQUE BAPTÊME ---
               SwitchListTile(
                 title: const Text("Êtes-vous baptisé ?"),
                 value: _isBaptise,
@@ -527,14 +592,11 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
                 onChanged: (val) => setState(() => _isBaptise = val),
               ),
 
-              // On affiche les champs SEULEMENT si baptisé est coché
-              if (_isBaptise) ...[ // Utilise ...[ ] pour grouper plusieurs widgets
+              if (_isBaptise) ...[
                 Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: _buildDateSelector("Date de Baptême", _dateBapteme, false),
                 ),
-
-                // ✅ NOUVEAU CHAMP : Paroisse de baptême
                 Padding(
                   padding: const EdgeInsets.only(top: 16.0),
                   child: _buildTextField("Paroisse de baptême", _paroisseBaptemeCtrl),
@@ -553,12 +615,16 @@ class _IdentificationScreenState extends State<IdentificationScreen> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   onPressed: _isLoading ? null : _submitForm,
+
                   child: _isLoading
                       ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                       : const Text("Enregistrer", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
                 ),
               ),
-              const SizedBox(height: 30),
+
+              // ✅ MODIFICATION : ESPACE EN BAS PLUS GRAND (80 au lieu de 30)
+              // Cela remonte le bouton par rapport à la barre système
+              const SizedBox(height: 80),
             ],
           ),
         ),
