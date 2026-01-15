@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:maparoisse/src/screens/home/tutorials_screen.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../app_themes.dart';
+import '../../services/auth_service.dart';
 import 'home_screen.dart';
 import 'requests_screen.dart';
 import 'requests_list_screen.dart';
@@ -78,17 +80,32 @@ class _DashboardScreenWithIndexState extends State<DashboardScreenWithIndex> {
   }
 
 
+
+
+
   Future<void> _checkFirstTimeTutorial() async {
+    // 1. Récupérer l'ID de l'utilisateur connecté
+    final authService = Provider.of<AuthService>(context, listen: false);
+    final userId = authService.id;
+
+    // Sécurité : Si pas d'ID (bug rare), on ne fait rien ou on utilise une clé générique
+    if (userId == null) return;
+
+    // 2. Construire une clé UNIQUE pour cet utilisateur
+    final String userKey = 'has_seen_tuto_$userId';
+
     final prefs = await SharedPreferences.getInstance();
-    // Vérifie si la clé 'has_seen_tuto' existe
-    bool hasSeen = prefs.getBool('has_seen_tuto') ?? false;
+
+    // 3. Vérifier cette clé spécifique
+    bool hasSeen = prefs.getBool(userKey) ?? false;
 
     if (!hasSeen) {
-      // 1. On marque tout de suite comme "vu" pour ne pas le harceler
-      await prefs.setBool('has_seen_tuto', true);
+      // Marquer comme vu IMMÉDIATEMENT pour cet utilisateur
+      await prefs.setBool(userKey, true);
 
       if (!mounted) return;
 
+      // ... (Le reste de ton code pour afficher le modal reste identique) ...
       // 2. On affiche le Modal joli
       showModalBottomSheet(
         context: context,

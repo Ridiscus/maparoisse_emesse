@@ -172,9 +172,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  @override
+
+
+
+
+
+
+    @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final theme = Theme.of(context);
 
     // 1. Récupère auth au début du build
     final auth = Provider.of<AuthService>(context); // Supprime 'listen: false' pour réagir aux changements

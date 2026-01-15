@@ -451,21 +451,18 @@ class AuthService extends ChangeNotifier {
 
 
 
-
-  /// REFACTORISÉ : Déconnexion (Inchangé)
+  /// DÉCONNEXION COMPLÈTE ET INTELLIGENTE
   Future<void> logout({bool apiCall = true}) async {
 
-    // --- AJOUT : Informe le backend de la déconnexion du token FCM ---
+    // 1. DÉSINSCRIPTION FCM (Notification)
     try {
-      // --- CORRECTION ICI ---
-      // Appelle la nouvelle fonction publique qui ne demande pas de permission
+      // Récupération du token sans demander de permission
       final String? fcmToken = await _notificationService.getToken();
-      // --- FIN CORRECTION ---
 
       if (fcmToken != null && _token != null) {
-        // Appelle l'API 6 pour désenregistrer
+        // Appelle l'API pour désenregistrer le token du backend
         await http.post(
-          Uri.parse("$_baseUrl/fcm-token/unregister"), // (API 6)
+          Uri.parse("$_baseUrl/fcm-token/unregister"),
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
@@ -480,28 +477,35 @@ class AuthService extends ChangeNotifier {
       print("[AuthService] Erreur lors du désenregistrement du token FCM: $e");
     }
 
-
+    // 2. DÉCONNEXION API (Laravel/Backend)
     if (apiCall && _token != null) {
       final url = Uri.parse("$_baseUrl/auth/logout");
       try {
         await http.post(url, headers: _authHeaders);
         print("Déconnexion API réussie.");
       } catch (e) {
-        print("Erreur réseau lors de la déconnexion : $e");
+        print("Erreur réseau lors de la déconnexion API : $e");
       }
     }
+
+    // 3. NETTOYAGE LOCAL INTELLIGENT (C'est ici la magie !)
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); // Efface tout pour être sûr
 
-    // ... tes resets de variables ...
-    _googleId = null; // <-- AJOUT
-    _appleId = null;  // <-- AJOUT
+    // On récupère toutes les clés stockées
+    final keys = prefs.getKeys();
 
+    for (String key in keys) {
+      // 🚨 PROTECTION : On n'efface PAS les clés qui commencent par "has_seen_tuto"
+      // Cela permet de se souvenir qu'un utilisateur spécifique a déjà vu le tuto.
+      if (!key.startsWith('has_seen_tuto')) {
+        await prefs.remove(key);
+      }
+    }
 
-    // --- AJOUT : Supprime le token localement sur l'appareil ---
+    // 4. SUPPRESSION TOKEN FCM LOCAL
     await _notificationService.handleLogout();
-    // --- FIN AJOUT ---
 
+    // 5. RÉINITIALISATION DES VARIABLES EN MÉMOIRE
     _isAuthenticated = false;
     _token = null;
     _id = null;
@@ -511,6 +515,11 @@ class AuthService extends ChangeNotifier {
     _phone = null;
     _photoPath = null;
     _civilite = null;
+    _googleId = null;
+    _appleId = null;
+    _estBaptise = false;
+
+    // 6. NOTIFICATION UI
     notifyListeners();
   }
 
@@ -518,7 +527,10 @@ class AuthService extends ChangeNotifier {
 
 
 
-  /// --- NOUVEAU Helper (CORRIGÉ) : Sauvegarde les données post-connexion ---
+
+
+
+  /// --- NOUVEAU Helper (CORRIGÉ & AJUSTÉ) : Sauvegarde les données post-connexion ---
   Future<void> _saveAuthData({
     required String token,
     required Map<String, dynamic> user,
@@ -526,89 +538,119 @@ class AuthService extends ChangeNotifier {
   }) async {
     final prefs = await SharedPreferences.getInstance();
 
-    // ... (sauvegarde token, id, name, username, email, phone... inchangés) ...
+    // 1. Sauvegardes de base
     await prefs.setString(_keyToken, token);
     await prefs.setBool(_keyIsLoggedIn, true);
     await prefs.setInt(_keyId, user['id']);
     await prefs.setString(_keyFullName, user['name']);
     await prefs.setString(_keyUsername, user['user_name']);
     await prefs.setString(_keyEmail, user['email']);
-    await prefs.setString(_keyPhone, user['contact']);
 
-    // --- AJOUT : Sauvegarde des IDs Sociaux ---
-    String? gId = user['google_id']?.toString();
+    // Gestion du téléphone (parfois null via Google)
+    if (user['contact'] != null) {
+      await prefs.setString(_keyPhone, user['contact']);
+    }
+
+    // 2. Sauvegarde des IDs Sociaux
+    /*String? gId = user['google_id']?.toString();
     String? aId = user['apple_id']?.toString();
 
     if (gId != null) await prefs.setString(_keyGoogleId, gId);
     if (aId != null) await prefs.setString(_keyAppleId, aId);
-
-    // Mise à jour des variables locales
-    _googleId = gId;
-    _appleId = aId;
-    // ------------------------------------------
+     */
 
 
-    // 1. On récupère la valeur qui est DÉJÀ stockée dans le téléphone
-    // (Celle enregistrée quand il a rempli sa fiche)
+    // 2. Sauvegarde des IDs Sociaux (CORRIGÉ)
+    // On ne met à jour QUE si l'API nous envoie une valeur.
+    // Si l'API renvoie null, on ne touche pas à ce qu'on a déjà en mémoire/stockage.
+
+    if (user['google_id'] != null) {
+      String gId = user['google_id'].toString();
+      await prefs.setString(_keyGoogleId, gId);
+      _googleId = gId; // On met à jour seulement si on a une nouvelle valeur
+    }
+
+    if (user['apple_id'] != null) {
+      String aId = user['apple_id'].toString();
+      await prefs.setString(_keyAppleId, aId);
+      _appleId = aId; // On met à jour seulement si on a une nouvelle valeur
+    }
+
+    // SUPPRIME les lignes qui étaient ici avant :
+    // _googleId = gId;  <-- C'est ça qui effaçait ta variable !
+    // _appleId = aId;   <-- C'est ça qui effaçait ta variable !
+
+
+    // ---------------------------------------
+    // 3. LOGIQUE BAPTÊME (Robuste)
+    // ---------------------------------------
+    // A. On récupère la valeur locale existante
     bool currentSavedStatus = prefs.getBool(_keyEstBaptise) ?? false;
-    bool finalStatus = currentSavedStatus; // Par défaut, on garde l'ancienne valeur
+    bool finalStatus = currentSavedStatus;
 
-    // 2. On vérifie si l'API nous envoie une info (Ce qui arrive au Login ou Update, mais PAS au démarrage)
+    // B. On vérifie si l'API nous envoie une info fraîche
     if (user.containsKey('est_baptise') && user['est_baptise'] != null) {
-      // L'API contient l'info, donc on met à jour avec la valeur de l'API
       if (user['est_baptise'] == 1 || user['est_baptise'] == true || user['est_baptise'] == "1") {
         finalStatus = true;
       } else {
         finalStatus = false;
       }
     }
-    // SINON : Si 'est_baptise' n'est pas dans le JSON, on garde 'finalStatus = currentSavedStatus'
 
-    // 3. On sauvegarde la valeur finale (Ancienne ou Nouvelle)
+    // C. On sauvegarde
     await prefs.setBool(_keyEstBaptise, finalStatus);
     _estBaptise = finalStatus;
 
     // ---------------------------------------
-
-
-    // --- CORRECTION URL IMAGE ---
+    // 4. CORRECTION URL IMAGE
+    // ---------------------------------------
     String? finalPhotoUrl;
     if (user['profile_picture'] != null && (user['profile_picture'] as String).isNotEmpty) {
-      String apiPhotoPath = user['profile_picture']; // Ex: "profiles/image.jpg"
+      String apiPhotoPath = user['profile_picture'];
 
-      print("Chemin photo reçu de l'API : $apiPhotoPath");
-
-      // Si c'est déjà une URL complète (au cas où)
+      // Si c'est déjà une URL complète (Google/Apple)
       if (apiPhotoPath.startsWith('http://') || apiPhotoPath.startsWith('https://')) {
         finalPhotoUrl = apiPhotoPath;
       }
-      // --- LA CORRECTION EST ICI ---
-      // Si c'est un chemin relatif (ex: "profiles/..." ou "/profiles/...")
-      // On ajoute le préfixe /storage/
+      // Sinon c'est un chemin relatif vers ton serveur
       else {
-        // Retire un / au début s'il y en a un pour éviter //
         if (apiPhotoPath.startsWith('/')) {
           apiPhotoPath = apiPhotoPath.substring(1);
         }
-        // Ajoute le dossier "storage"
         finalPhotoUrl = "https://e-messe-ci.com/storage/" + apiPhotoPath;
       }
-      // --- FIN CORRECTION ---
 
       await prefs.setString(_keyPhoto, finalPhotoUrl);
-      print("URL photo sauvegardée (corrigée) : $finalPhotoUrl");
-
     } else {
-      print("Aucune photo de profil reçue de l'API.");
       await prefs.remove(_keyPhoto);
     }
-    // --- FIN CORRECTION URL ---
 
-    if (civilite != null) {
-      await prefs.setString(_keyCivilite, civilite);
+    // ---------------------------------------
+    // 5. CORRECTION CRITIQUE POUR LA CIVILITÉ (Le fix pour Google)
+    // ---------------------------------------
+
+    // A. On cherche la civilité dans la réponse du serveur
+    // (Utile quand on se reconnecte via Google et que l'argument 'civilite' est null)
+    String? apiCivilite = user['civilite']; // Vérifie si ton backend renvoie bien 'civilite'
+
+    // B. On décide quelle civilité garder :
+    // Priorité 1 : Celle passée en argument (ex: Inscription ou Edit Profil)
+    // Priorité 2 : Celle venant de l'API (ex: Login Google d'un ancien user)
+    String? finalCivilite = civilite ?? apiCivilite;
+
+    // C. On sauvegarde
+    if (finalCivilite != null && finalCivilite.isNotEmpty) {
+      await prefs.setString(_keyCivilite, finalCivilite);
+      _civilite = finalCivilite; // Mise à jour immédiate mémoire
+    } else {
+      // Si on n'a rien trouvé, on recharge ce qu'il y a en mémoire locale
+      _civilite = prefs.getString(_keyCivilite);
     }
 
-    // ... (M-À-J de l'état local... inchangé) ...
+    // ---------------------------------------
+    // 6. Mise à jour finale des variables d'état (Provider)
+
+// ---------------------------------------
     _isAuthenticated = true;
     _token = token;
     _id = user['id'];
@@ -616,9 +658,9 @@ class AuthService extends ChangeNotifier {
     _username = user['user_name'];
     _email = user['email'];
     _phone = user['contact'];
-    _photoPath = finalPhotoUrl; // Utilise l'URL corrigée
-    _civilite = prefs.getString(_keyCivilite);
-    _estBaptise = finalStatus;
+    _photoPath = finalPhotoUrl;
+    // _civilite a déjà été mis à jour ci-dessus
+    // _estBaptise a déjà été mis à jour ci-dessus
 
     notifyListeners();
   }
